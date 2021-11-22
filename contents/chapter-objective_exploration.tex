@@ -1,0 +1,256 @@
+\chapter{Learining Objectives}
+\index{Learining Objectives}
+
+This chapter explores the extent to which the overall learning objective effects retrieval performance, indicating better alignment with respect to a similarity metric.
+We note that the terms `learning objective' and `loss function' are used in this chapter interchangeably.
+% However, in certain experiments in this chapter additional parameters are added to the prediction pipeline for a particular learning objective, which is atypical 
+
+
+
+
+\section{Experimental Design}
+\subsection{Data}
+The experiments in this chapter (and all proceeding chapters) use a dataset consisting of 100,000 images from the Places 205 dataset \citeme{} that have additional English \citeme{}, Hindi \citeme{}, and Japanese \citeme{} spoken descriptions corresponding to each image.
+It is important to note that the descriptions from each language are not translations of each other as each speaker is only directed to describe the image and has no knowledge of what was said previously. 
+This means that there is no assumption of alignment in the ordering of objects described or the way in the manner in which the speaker chooses to describe the image.
+The statistics for the descriptions can be found in \citeme{see if all stats are in one place}
+
+We use a training set of 99,000 datapoints and use the remaining 1,000 datapoints for testing. 
+In cases such as \dftwrds{} in which hyperparameter tuning is performed, a random subset of 1,000 datapoints are extracted from the training set and used for evaluation.
+\subsection{Models}
+\label{section:obj_exp_models}
+The experiments in this chapter all use the same basic implementation for the full encoder function $f_\theta$.
+All viewpoints of the image view are encoded using an image-specific encoder.
+Additionally, each language view has it's own dedicated speech encoder, meaning there are no shared layers/parameters across languages.
+However, the architecture of each language's encoder is identical.
+
+All models used in this work are convolutional neural networks (CNNs) at their core.
+The details of each CNN architecture are given below.
+
+\subsubsection{Image Encoder}
+The image encoder we use is a resnet CNN published by \citeme[He et al] and is initialized using the weights of a model that has been pre-trained on imagenet \citeme{} object classification.
+The image encoder has \dftwrds{architecture specs here}.
+For our dataset the representation of each image output by the image encoder has fixed dimensions and is in $\mathbb{R}^{7\times7\times1024}$.
+Where 1024 is out embedding size of each super pixel.
+
+% This model has been pre-trained on the task of object detection by using the imagenet dataset \citeme{}d
+
+\subsubsection{Audio/Speech Encoder}
+\label{section:speech_encoder}
+The audio encoder architecture is the same across all languages.
+It is a resnet CNN introduced by \citeme[Harwath resnet paper].
+The architecture is similar to the image encoder, but with slight differences in the dimensions in each layer.
+These differences are a natural result of the inherent differences in the visual and auditory modalities.
+% presumably a results of the original authors' optimization efforts on the respective modalities.
+The details of the architectural differences are given in figure \dftwrds[make and reference figure].
+All audio encoders are randomly initialized.
+
+Unlike the image encoder, since spoken utterance is of variable length, the dimensions of the speech output for each encoder are not fixed.
+To remedy this, for each batch we take each language view and find the longest utterance in the batch.
+We then pad all other utterances in the respective view to be the same length as the longest.
+This means the sequence length of each language view is fixed inside a batch, but the sequence lengths vary across languages within a batch and across batches.
+Thus, letting $i$ denote the $i\th$ batch and $j$ denote the $j\th$ view, we can define $max\_sl_{ij}$ as the maximum sequence length of the utterance of the $j\th$ language view in the $i\th$ batch.
+Due to the nature of the speech encoder's CNN architecture, the sequence length of the output representation has a reduced length, but is deterministic and we can denote it $max\_sl\_out_{ij}$ for simplicity.
+For our dataset, $max\_sl\_out_{ij}$ typically ranges from 50 to 500.
+With this definition we have that the output of each speech encoder is in $\mathbb{R}^{max\_sl\_out_{ij}\times 1024}$.
+Where 1024 is out embedding size of the output sequence.
+
+\subsection{Output Pooling}
+\label{section:output_pooling}
+As noted in the previous section, the output of each view encoder do not necessarily align across all dimensions. 
+This creates a problem for most distance/similarity measures which typically require vector representations.
+Work by \cite{harwath2018jointly} explored a more complex set of similarity measures which utilize similarity measures across the time and location dimension, but for this work we restrict ourselves to a simplified setting of similarity measures defined only on two vectors of the same dimension.
+This is also more realistic in terms of retrieval when the set of target viewpoints is very large.
+We therefore require some sort of pooling mechanism before similarity scores can be calculated and retrieval can be performed.
+
+
+Experiments in section \dftwrds[put ref later] compare pooling strategy performance empirically, but the following sections describe the basics of each mechanism.
+
+\subsubsection{Average Pooling}
+\label{section:average_pooling}
+This is the simplest pooling strategy and consists of first flattening all dimensions before the last (only relevant for the image view), then averaging across the flattened dimension.
+One complication is the padding added to resolve the variability of sequence length in the speech encoders.
+Using a simple average would diminish the features of the meaningful parts of shorter sequences.
+Also, the sequence length is a reduced due the convolutional downsampling in each layer, which means there may be a point in the final output sequence that corresponds to both padded and unpadded input.
+To deal with this we only average the first $avg_pool_len$ sequence embeddings. 
+For the $k\th$ utterance of the  $i\th$ batch of the $j\th$ view, we denote $len_{ijk}$ as the original sequence length of the utterance. 
+we calculate $avg\_pool\_len$ as:
+\begin{equation*}
+    avg\_pool\_len = \lfloor  len_{ijk} / \text{round}\Big( \frac{max\_sl_{ij}}{max\_sl\_out{ij}} \Big) \rfloor
+\end{equation*}
+Where $max\_sl_{ij}$ and $max\_sl\_out_{ij}$ are defined in the same manner as in section \ref{section:speech_encoder} and $\text{round}(\cdots)$ rounds to the nearest integer.
+Here $\frac{max\_sl_{ij}}{max\_sl\_out{ij}}$ can be thought of as the reduction ratio from the input sequence length to the output sequence length.
+This calculation follows the same strategy as in \citeme[Harwath's resnet orig or VQ paper].
+
+\subsubsection{Multi-Head Self-Attention Pooling}
+\label{section:mh_attn_pooling}
+Considering the simplistic nature of average pooling, we also experiment with using a self attention layer to perform the pooling.
+Previous work \citeme[Ohishi] found that a single headed self-attention layer was beneficial when used \textit{before} the pooling layer (specifically between the second to last and last convolutional layers), but they still used average pooling for their final representation.
+
+Inspired by this result and the recent proliferation and success of Transformer layers \citeme, which uses multi-headed self-attention (MHSA), we attempt to use this as an adaptive pooling mechanism for our final representation.
+Specifically, we use 8 heads and an positional encoder layer similar to \citeme and we chose the larges $max_sl_out_ij$ to be the maximum sequence length for the positional encoder.
+However, unlike the original transformer block, we do not scale the input by $\sqrt{d_{model}}$ and instead scale the positional encoding by $\frac{1}{\sqrt{d_{model}}}$  as we found this produced better results.
+We hypothesize that without the layer norm used after the MHSA layer in the transformer block, the original scaling gives final representations an overly large L2 norm which negatively effects our similarity based losses.
+We also note, though, that adding a layer norm layer and a residual connection as in the original transformer block did not resolve this issue.
+Further inquiry would be required to fully explain this behavior.
+
+After the positional encoding, we apply a dropout layer to impose a layer specific hyperparameter we can use to counteract the potential for MHSA to overfit to the dataset.
+
+Another implementation note is that we chose to prepend an additional learnable embedding to each flattened/sequence dimension to act in the same capacity as the CLS token used in the transformer block.
+We then use the first embedding (which corresponds to the position of prepended embedding) as our final representation.
+We also experimented with simply using the first embedding of the sequence and the results of this are discussed in section \ref{section:pooling_experiments}
+% but found that this also negatively impacted results (shown in Section \ref{section:pooling_experiments}.
+% For our main experiments chose to use the additional embedding since it better aligns with implementation used in the Transformer.
+
+As a final note, we use sequence masking to prevent the final representation from attending to the embeddings corresponding to padding.
+And finally, we used the PyTorch implementation of MHSA in our experiments.
+
+\subsubsection{Transformer Pooling}
+\label{section:transformer_pooling}
+We also experiment with using a full Transformer block and using a single embedding to serve as the final representation. 
+We used the same settings and adaptations as described in \ref{section:mh_attn_pooling} regarding number of heads, positional encoding, prepending a learned embedding, and masking.
+We chose to use 2048 as the internal feed forward dimension, which is the same as the original Transformer.
+
+\subsection{Training}
+\label{section:obj_exp_training}
+% In this chapter, all views are encoded with their own view specific model.
+We use the Adam optimization algorithm in all of the following experiments. 
+The optimizer settings can be found in figure \dftwrds[make this later].
+We also use a batch size of 128 and a learning rate of .001 with a scheduler. 
+This scheduler enforces a linear warmup schedule (from 0 to .001) through the first 10\% of training steps, and then decreases by a factor of .99 after every 50 steps.
+
+In this chapter's experiments, all training is done using the full-graph framework of multi-view training as described in Section \ref{section:full_graph_framework}.
+This is to simplify experimental variables, such as choosing which view will be the anchor, as well as to give easy access to all information shared between the views.
+The next chapter will explore ways to reduce the complexity of full pairwise comparisons.
+
+Importantly, all loss functions under consideration have some component designed to encourage dissimilitude. 
+Without this, predictions can find a trivial local solution by collapsing on constant value for all representations.
+Contrastive loss functions use `negative examples' to serve this role where as loss functions like the hyperspheric loss contain the uniformity objective.
+In either case, we supply the non-positive examples in each batch to these sub-components. 
+
+To be clear, InfoNCE, Triplet loss, Masked Margin loss, and Scheduled Masked Margin loss all draw their negative examples from within their respective batch.
+The Hyperspheric loss additionally draws the samples for it's uniformity loss term from the examples in the batch.
+This strategy is in contrast to updating a memory-bank mechanism \citeme in which a much larger number of stale representations are used and periodically updated.
+
+
+\subsection{Testing and Reporting Metrics}
+\label{section:obj_exp_testing_rep}
+During inference, for each pair of views, weeach viewpoint in each view in the evaluation set is measured against all viewpoints in each other view in the evaluation set.
+To clarify, if $N$ be the
+\dftwrds[fix the previous sentence. Merge with explanation below]
+
+We report the recall at k scores with $k=1, 5,$ and $10$, which indicates how often the target viewpoint was in the top $k$ closest viewpoints.
+Also, because of space concerns and since are primarily interested in overall alignment in the latent space, for each view pair we report only the average recall at k scores between view pairs.
+That is, for each view pair two sets of recall at k scores are calculated: 1) a set in which the first view of the pair is treated as the input and the second view is the target, and 2) a set where the second of the pair is treated as the input and the first view is the target.
+These two directions do not necessarily produce the same results, but we did not observe a systematic of substantial deviation from the average among any view pair in any experiment in this work.
+We therefore chose to omit the scores for the individual directions and simply report the average.
+
+Still, we fundamentally distinguish between view pairs between different modalities (i.e. image-speech pairings) and those withing the same modality (speech-speech).
+For convenience, then, we will refer to average results from speech-speech retrieval scores simply as `cross-lingual retrieval results' and average results from speech-image pairings simply as `image retrieval results', acknowledging that retrieving speech utterances from image input is not actually `image retrieval'.
+
+\subsection{Loss Functions Experiments}
+This chapter's experiments involve \dftwrds[insert final number] distinct loss functions: InfoNCE, hyperspheric loss, triplet loss, masked margin loss, and scheduled mml. 
+We compare performance of each directly in section \ref{section:direct_compare}.
+However, the hyperspheric loss contains many hyperparameters that are unique to it.
+Also, this loss function has never been applied to this task so optimal hyperparameters have not previously been studied.
+We therefore describe our tuning procedure in section \ref{section:hyperspheric_tuning}.
+
+After comparing loss functions, we also experiment with different pooling strategies in section \ref{section:pooling_experiments} and additional potential settings for loss functions in section \ref{section:addition_settings}.
+
+
+
+
+\subsection{Hyperspheric Loss Experiments}
+\label{section:hyperspheric_tuning}
+As the hyperspheric loss is markedly different than the loss functions previously explored on this dataset, we chose to tune the uniformity sub-loss weighting.
+We chose this hyperparameter because it appeared to be the most impactful to the final results of the original paper \citeme[hsphere paper].
+There are in fact several hyperparameters available for adjustment for the hyperspheric loss, but due to time constraints we were unable to tune the others.
+We chose an optimization scheme of staring with the baseline value (1.0), and decreasing by $.25$ until performance ceased to increase. 
+We kept all other hyperparameters constant during this tuning. 
+In particular, we held the alignment loss weight at 1.0.
+
+We used the encoder implementations described in \ref{section:obj_exp_models} and used average pooling to combine the final output representations
+
+
+\input{contents/tables/objective_comparisons/hyperspheric_image_ret_exps.tex}
+\input{contents/tables/objective_comparisons/hyperspheric_cling_ret_exps.tex}
+
+The results for the image-audio (image retrieval) view pairings can be found in figure \dftwrds and the audio-audio pairs (aka cross-lingual) shown in figure \dftwrds.
+As can be seen in both image retrieval and cross-lingual settings, the overall performance of the hypersheric loss is highly dependent on the weighting of the uniformity sub-loss.
+In all following experiments, we use the best performing uniformity weighting, .75.
+
+\subsection{Base comparison}
+\label{section:direct_compare}
+
+This set of experiments compares the results of several prominent loss functions that been applied to image retrieval tasks.
+Specifically, we compare InfoNCE loss, triplet loss, masked margin softmax loss, adaptive mean margin softmax loss, and hyperspheric loss with the hyperparameters described in section \ref{section:hyperspheric_tuning}.
+Training, inference, and evaluation procedures are as described in sections \ref{section:obj_exp_training} and \ref{section:obj_exp_testing_rep}.
+% All losses are compared with the same encoder function $f_\theta$ as described in section \ref{section:obj_exp_models}.
+% nd pooling strategy.
+% Specifically, these experiments use a resnet50 image encoder model described in section \dftwrds[ref later] and separate 
+
+\input{contents/tables/objective_comparisons/objectives_comparison_img_ret.tex}
+\input{contents/tables/objective_comparisons/objectives_comparison_cling_ret.tex}
+
+Results for image retrieval pairings can be found in Table \ref{table:Objective_img_ret} and cross-lingual results can be found in Table \ref{table:Objective_cling_ret}.
+We highlight several findings from this experiment:
+\begin{enumerate}
+    \item InfoNCE loss consistently outperforms all other losses in both image retrieval and cross-lingual settings.
+    \item Cross-lingual retrieval appears more difficult than image retrieval for all losses.
+    \item Japanese and image representations appear remarkably strongly aligned for both InfoNCE and triplet loss.
+\end{enumerate}
+
+Finding 1
+% generally aligns with the results reported by \cite{ohishi2020trilingual}.
+% This experiment, however, 
+provides empirical evidence that InfoNCE outperforms a broad range of loss functions.
+Experiments by \cite{ohishi2020trilingual} showed that MMSM outperformed the form of triplet loss in our experiments, but our finding provide evidence that InfoNCE outperforms a broader range of loss functions.
+
+
+Finding 2 and 3 also aligns with the general findings of \cite{ohishi2020trilingual}, and our experiments show that this trend continues for InfoNCE.
+Considering the strong performance, all remaining experiments will use InfoNCE loss.
+
+\subsection{Pooling Experiments}
+\label{section:pooling_experiments}
+
+\input{contents/tables/objective_comparisons/mh_attn_hparams_img_ret.tex}
+\input{contents/tables/objective_comparisons/mh_attn_hparams_cling_ret.tex}
+As described in \ref{section:output_pooling}, there are many different strategies to pool the final output representations of each view.
+Since neither MHSA or a Transformer layer has been used a pooling strategy, we first attempt to tune hyperparameters of the simpler of the two layers, the MHSA.
+We chose to adjust the learning rate and the dropout percentage.
+Due to time constraints we were not able to fully tune these parameters, but we were able to explore an array of settings. 
+The image retrieval scores for these settings can be found in Table \ref{table:mh_attn_hparams_img_ret} and the cross-lingual scores can be found in Table \ref{table:mh_attn_hparams_img_ret}.
+
+Comparing these results with those for average-pooled InfoNCE, MHSA is clearly underperforming.
+We first found that the original learning rate of .001 made learning unstable and decreasing to .0001 helped considerably.
+We next hypothesized that the lower performance might be due to some amount of overfitting of the attention mechanism.
+This prompted us to adjust the percentage of dropout applied after the positional encoding layer.
+Our results contradict this hypothesis as it seems increasing regularization did not improve generalization.
+
+
+
+
+\subsubsection{Additional settings}
+\label{section:addition_settings}
+These above results prompted us to try several other uses of MHSA as well as the Transformer block.
+First, we tried to simply use the first embedding of the flattened sequence instead of the additional learned prepended token.
+We also tried to place the MHSA between the second to last and last layer and simply feed that to the last convolutional layer to then get average-pooled.
+This is a similar strategy of that explored by \cite{ohishi2020trilingual}, but we maintain our 8 head configuration rather than using a single head.
+The learning rate for this setting was returned to .001 (since that worked well previously for average pooling) and dropout the dropout kept at .1.
+Finally we try the Transformer block, which has an additional layer norm layer and two linear layers.
+\input{contents/tables/objective_comparisons/additional_configs.tex}
+Results for image retrieval can be found in Table \ref{table:additional_obj_configs}, we omit the cross-lingual results for space concerns and redundat findings.
+
+The recal scores indicate that removing the prepended token has a marginally negative impact on performance.
+Somewhat surprisingly, though, the internal MHSA configuration and the Transformer block proved to subtantially harm retrieval.
+This may be due to a lack of robust tuning, but it should be noted that average pooling has not hyperparameters itself and does not require tuning.
+
+
+
+
+% \subsection{Triplet}
+% \subsection{InfoNCE}
+% \subsection{Masked Margin}
+% \subsection{Scheduled Masked Margin}
+% \section{Results}
+

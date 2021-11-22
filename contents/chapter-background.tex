@@ -1,0 +1,85 @@
+\chapter{Background}
+\index{Backgroud}
+This section will review the primary \dftwrds that will be compared empirically through the experiments in \dftwrds{put in refs}
+
+\section{Task Description}
+\label{section:task_defs}
+All experiments in this work are designed to estimate predictive performance on retrieval tasks.
+This section formalizes the retrieval task and describes it in detail for the sake of clarity.
+We also define terms that well be used for the rest of the paper.
+
+% First we will formally define terms, though, in the fully generalized setting of our task.
+We are given a \underline{${\D}$}ataset, $\D$, containing a set of $K$ distinct \textit{\underline{$\mathcal{V}$}iews}.
+% These views are distinguishable, of course, but not necessarily ordered.
+We will refer to an arbitrary view as $\V[j]$ where $j\in[1,K]$ indexes each view.
+Each view, $\V[j]$,  contains $N$ samples and each sample, $\nu_{ij} \in \V[j], i\in [1,N], j\in[1,K]$ has a corresponding entry in each of the other $K-1$ views which share some sort of semantic relatedness.
+Furthermore, each $V_j$ has it's own representation scheme for it's constituent samples which making a conventional tensor representation with fixed dimensions for all samples in $D$ inexact.
+This gives the generalized dataset for our task the following definition:
+\begin{equation*}
+    \D = \{(\nu_{i1}, \nu_{i2}, \cdots, \nu_{iK}) : \nu_{i1} \in \V[1], \nu_{i2} \in \V[2], \cdots, \nu_{iK} \in \V[K], \quad i \in [1,N]\}
+\end{equation*}
+To reduce ambiguity, we will refer to an arbitrary K-tuple in $\D$ as a \textit{datapoint} and an arbitrary member of a K-tuple/datapoint, $\nu_{ij}$, as a \textit{viewpoint}. 
+We will be sure to clarify in cases where this definition of viewpoint allows for ambiguity between the colloquial use of viewpoint by instead using `point of view' for the colloquial sense as needed.
+
+To be more concrete for a moment, in the dataset used for this work we have $K=4$ views in our dataset which are: 1) the set of images, 2) the English descriptions, 3) the Hindi descriptions, and 4) the Japanese descriptions (although we do not assume that particular ordering).
+For each image (viewpoint) in the image view, there is a corresponding spoken utterance (viewpoint) describing that image in all three languages.
+We therefore assume some type of reliable mutual semantic information between each viewpoint in all datapoints.
+
+As an aside, \textit{mutual information} (MI) has a well-known and well-defined mathematical form, but we will be using the term in the idiomatic sense.
+Recent work by \citeme{} has shown that  many popular lower-bound maximization schemes for estimating MI break down in practice and do not correlate with expected performance gains.
+Furthermore, MI is only well-studied in the two variable (view) case. 
+The generalization of MI to three or more variables is referred to as \textit{interaction information} (II) and has certain properties (such as permitting negative values of II) that make it difficult to interpret.
+
+Also note that, on occasion, we further categorize our views based on \textit{modality}.
+To be clear, this dataset contains two modalities: vision and audio; one view is in the vision modality (images) and three views are in the audio modality (English, Japanese, and Hindi utterances).
+We therefore commonly differentiate retrieval results based on modality pairing, retrieval results from vision-audio pairs being referred to as `image retrieval' and audio-audio retrieval results referred to as cross-lingual.
+
+Keeping these points in mind, we still wish to encode the datapoints from each view into a shared vector space. 
+Our task, then, in words is: given an input (indexed by i), $\nu_{ij}$, from the $j\th$ view, $V_j$, and a set of datapoints from a target view $V_t$, we would like like to retrieve $\nu_{it}$ from $V_t$.
+In order to do this we use an \textit{encoder} function $f_\theta$ to produce a numeric representation of a viewpoint.
+
+$f_\theta$ is parameterized by an arbitrary number of parameters denoted by $\theta$.
+It takes a viewpoint as input, and produces an output representation.
+In this work all encoders take the form of neural networks, and in particular CNNs \dftwrds[reference descrip in background].
+We also allow the encoder to take as input information indicating the input view.
+That is, if we let $j$ denote the input view, we can denote the encoder and it's input/arguments as $f_\theta(\nu_{ij},j)$.
+This notation effectively generalizes over many potential implementations of $f_\theta$. 
+$f_theta$ might be implemented such that all views have a distinct set of model parameters, or some parameters might be shared across a subset views.
+
+
+The retrieval is then performed by comparing the input, $\nu_{ij}$, with all other $\nu_{ik} \in V_k$ and returning the $\nu_{ik}$ with the highest \textit{similarity score}.
+This similarity score is measured by a chosen \textit{similarity function}, $S$.
+$S$ follows the typical mathematical definition of a distance measure (i.e. it takes two arguments, it's always non-negative, and it is symmetric in it's arguments).
+For retrieval tasks this similarity function typically takes one of the following forms: the dot-product, the euclidean distance, or the cosine similarity.
+
+With all terms defined, we can write our most general leaning objective as:
+\begin{equation}
+    \underset{\theta}{\max} \Big(\sum_{(\nu_i1,\cdots, \nu_ik)\in D, i\in[1,N]} \;\; \sum_{j\in[1,K]} \underset{t\in[1,K], t\neq j }{\max} S(f_\theta(\nu_{i,j}, \,j), f_\theta(\nu_{i,t}, \,t))\Big)
+\end{equation}
+Note, again, that $f_\theta$ need not be a single neural network encoder.
+
+This optimization objective has no known exact solution \dftwrds[find support or use other language to describe difficulty] and must be approximated.
+Recently, this type of optimization has been routinely  approximated using a differentiable loss function and a gradient-descent based optimization algorithm.
+There are a number of loss-function in common use for this type of maximization objective, many of which are motivated by maximizing the estimate of the aforementioned MI estimate.
+Which one of these loss functions produces optimal results for our particular setting is the subject of the following experiments in this chapter.
+
+\section{Loss Functions}
+There are numerous loss functions that are designed to encourage `similarity' among pairs or groups of datapoi
+\subsection{Triplet}
+\subsection{InfoNCE}
+\subsection{Masked Margin}
+\subsection{Scheduled Masked Margin}
+\section{Multiview Contrasting Frameworks}
+\label{section:backg_contrast_framework}
+\subsection{Full Graph}
+\label{section:full_graph_framework}
+\subsection{Anchor}
+\label{section:anchor_framework}
+\section{Neural Architectures}
+\subsection{ResDaveNet}
+\subsection{Pooling}
+\subsubsection{Multiheaded Attention Pooling}
+\subsubsection{Average Pooling}
+\section{Multi-lingual Training Frameworks}
+\subsection{Language Tag}
+\subsection{Shared Layers}

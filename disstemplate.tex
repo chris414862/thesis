@@ -24,9 +24,11 @@
 
 \usepackage{amsmath,amsthm,amsfonts,amscd} 
 				% Some packages to write mathematics.
+\usepackage[dvipsnames]{xcolor}
 \usepackage{eucal} 	 	% Euler fonts
 \usepackage{verbatim}      	% Allows quoting source with commands.
 \usepackage{makeidx}       	% Package to make an index.
+\usepackage{booktabs}
 % \usepackage{psfig}         	% Allows inclusion of eps files.
 \usepackage{epsfig}         	% Allows inclusion of eps files.
 % \usepackage{citesort}         	% 
@@ -214,6 +216,11 @@ from Distant Language Groups}
 %
 %	Here some macros that are needed in this document:
 
+\newcommand{\V}[1][i]{\mathcal{V}_#1}
+\newcommand{\D}{\mathcal{D}}
+\renewcommand{\th}{^{th}}
+\newcommand{\dftwrds}[1][INSERT LATER]{\textcolor{red}{#1}}
+\newcommand{\citeme}[1][CITEME]{\textcolor{red}{(#1)}}
 
 \newcommand{\latexe}{{\LaTeX\kern.125em2%
                       \lower.5ex\hbox{$\varepsilon$}}}
@@ -320,17 +327,17 @@ This document and its source file show to write a Doctoral Dissertation using
 % of the include statements (something I found helpful in my own
 % dissertation).
 %
-\include{orig_template_contents/chapter-introduction}
+\include{contents/chapter-introduction}
 
-\include{orig_template_contents/chapter-instructions}
+\include{contents/chapter-background}
 
-\include{orig_template_contents/chapter-howtouse}
-
-\include{orig_template_contents/chapter-makingbib}
-
-\include{orig_template_contents/chapter-tables+figs}
-
-\include{orig_template_contents/chapter-math}
+\include{contents/chapter-objective_exploration}
+%
+\include{contents/chapter-loss_complexity}
+%
+\include{contents/chapter-parameter_efficiency}
+%
+\include{contents/chapter-conclusion}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -345,9 +352,9 @@ This document and its source file show to write a Doctoral Dissertation using
 
 \include{orig_template_contents/chapter-appendix1}
 
-\include{orig_template_contents/chapter-appendix2}
-
-\include{orig_template_contents/chapter-appendix3}
+% \include{orig_template_contents/chapter-appendix2}
+%
+% \include{orig_template_contents/chapter-appendix3}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

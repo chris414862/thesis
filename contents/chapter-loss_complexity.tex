@@ -1,0 +1,52 @@
+\chapter{Loss Complexity}
+\index{Loss Complexity}
+
+Previous work in this area has noted that fully optimizing retrieval performance requires the tuning of each direction of each pair of views being optimized \citeme[Ask Dr. Harwath].
+Since the number of pairings grows quadratically with each additional view, this can result in an untennable number of parameters to tune.
+Furthermore, work by Chen et al. \cite{chen2020simple} and He et al. \cite{he2020momentum} have noted that state-of-the-art contrastive loss objectives are sensitive to the number of negative examples.
+Since negative samples are commonly taken from within each mini-batch \cite{oord2018representation, ilharco2019large}, this means the best performing models need to be trained either using large batch sizes or a memory-bank mechanism with stale representations \cite{he2020momentum} \dftwrds[check that this is the correct citation].
+It is as yet unclear how the increase in number of views/modalities effects this need for negative examples.
+We hypothesize that as the number of additional views are added, all of which contain some aspect of the underlying latent information, the number of necessary negative examples might decrease.
+These ideas motivate this chapter's experiments in which we explore strategies reduce the growth to a linear increase and assess the impact on performance.
+
+We start with our experimental design in Section \ref{section:loss_comp_exp_design}, then we discuss our results in Section \ref{section:loss_comp_results}.
+
+\section{Experimental Design}
+\label{section:loss_comp_exp_design}
+Most aspects of our experimental setup are identical to Section \ref{section:loss_comp_exp_design}, including the dataset and encoder architectures.
+Again each view has a dedicated encoder and final representations are obtained by average pooling.
+We use same Adam optimizer with a learning rate of .001 and InfoNCE loss.
+
+Our main experimental variables involve the multi-view training framework outlined in Section \ref{section:backg_contrast_framework}.
+Instead of using all view-pairs (i.e. the \textit{full-graph}), we try three variations of the \textit{anchor} framework.
+
+In the first we simply use the image view as the anchor.
+That is, we only compute the InfoNCE loss from view pairs that include the image view.
+As the only view in the visual modality, this seems a natural choice.
+
+In the second variation, we use an `average view' as the anchor, which is an average representation of all views.
+Specifically, for each datapoint we average the final representations of each viewpoint (recall our definition of datapoint and viewpoint from Section \ref{section:task_defs}).
+This effectively creates a centroid for each datapoint. % positively associated viewpoint.
+Within the InfoNCE loss, our intuition is that positively associated viewpoints will be drawn closer to their own centroid, while being pushed away from centroids of other datapoints.
+
+In the third variation, we deviate slightly from the multiview contrastive framework of \citeme and use an adapting the average view as our anchor.
+This adapting average view changes according to which view is being contrasted.
+To be concrete, we iterate over each view in a batch and for each view we use the average of all other views as the contrasting view for the InfoNCE loss.
+This differs from our second variation in that instead of a fixed full average, which will contain in it the information from any view contrasted with it, we instead remove the information from the view being contrasted.
+
+For each of the three variations we train a new set of encoders from scratch all under the same set of conditions other than the three variations described above.
+
+\section{Resuts}
+\label{section:loss_comp_results}
+The recall at 1, 5, and 10 results for image retrieval for these three variation can be seen in Table \ref{table:complexity_opts_img_ret}.
+\input{contents/tables/complexity/complexity_opts_img_ret.tex}
+Somewhat surprisingly, image retieval performance increased when removing the cross-lingual objective from the loss.
+In one sense, it would seem natural that solely focusing on the image retrieval task in the loss function should produce beter image retrieval scores.
+However, when viewed from the lens of shared mutual information, one might expect that, at an abstract level at least, removing one language encoder's incentive to learn associations with other languages would harm the model's ability to properly encode speech into a space that is shared by all languages and images.
+
+This indicates that there might be some language or cultually specific tendencies present in each language view that co-occur consistently with certain aspects of the image set that have little to no co-occurence with the descriptions of other languages.
+Considering the results from Harwath et al. \cite{} and Ohishi et al. \cite{ohishi2020trilingual}, it seems likely that there is a benifit from a shared multi-lingual
+
+
+\input{contents/tables/complexity/complexity_opts_cling_ret.tex}
+

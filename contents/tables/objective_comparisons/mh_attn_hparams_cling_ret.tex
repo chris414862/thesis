@@ -1,0 +1,27 @@
+\begin{table}
+    \centering
+\begin{tabular}{lllll}
+\toprule
+{} & Lr .001 & Lr .0001 & Lr .0001 & Lr .0001 \\
+{} & Drop .1 & Drop .1 & Drop .3 & Drop .5 \\
+\midrule
+Best Epoch          &                          1 &                                  15 &                     21 &                     32 \\
+\midrule
+hin\&eng\_r1  &                      0.20\% &                               7.60\% &                  6.50\% &                  2.20\% \\
+hin\&eng\_r5  &                      1.65\% &                              20.85\% &                 18.80\% &                  9.25\% \\
+hin\&eng\_r10 &                      2.70\% &                              29.20\% &                 27.80\% &                 14.80\% \\
+\midrule
+jap\&eng\_r1  &                      0.15\% &                               6.70\% &                  6.25\% &                  2.05\% \\
+jap\&eng\_r5  &                      0.70\% &                              19.80\% &                 19.05\% &                  7.95\% \\
+jap\&eng\_r10 &                      1.05\% &                              29.30\% &                 26.90\% &                 12.90\% \\
+\midrule
+jap\&hin\_r1  &                      0.20\% &                               5.75\% &                  5.00\% &                  1.85\% \\
+jap\&hin\_r5  &                      0.80\% &                              17.15\% &                 15.65\% &                  7.85\% \\
+jap\&hin\_r10 &                      1.45\% &                              26.50\% &                 22.40\% &                 12.60\% \\
+
+\bottomrule
+\end{tabular}
+
+\caption{Multi-head attention pooling using InfoNCE loss. Cross-lingual retieval results.}
+\label{table:mh_attn_hparams_cling}
+\end{table}
