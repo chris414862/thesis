@@ -14,34 +14,33 @@
 \contentsline {subsection}{\numberline {2.4.1}Image Model}{15}%
 \contentsline {subsection}{\numberline {2.4.2}Audio Model}{16}%
 \contentsline {subsubsection}{\numberline {2.4.2.1}Audio Pre-Processing}{16}%
-\contentsline {subsubsection}{\numberline {2.4.2.2}architecture}{16}%
-\contentsline {chapter}{Chapter 3.\hspace *{1em}Learining Objectives}{17}%
+\contentsline {subsubsection}{\numberline {2.4.2.2}Architecture}{16}%
+\contentsline {chapter}{Chapter 3.\hspace *{1em}Exploring Learining Objectives}{17}%
 \contentsline {section}{\numberline {3.1}Experimental Design}{17}%
 \contentsline {subsection}{\numberline {3.1.1}Data}{17}%
-\contentsline {subsection}{\numberline {3.1.2}Models}{18}%
-\contentsline {subsubsection}{\numberline {3.1.2.1}Image Encoder}{18}%
-\contentsline {subsubsection}{\numberline {3.1.2.2}Audio/Speech Encoder}{19}%
-\contentsline {subsection}{\numberline {3.1.3}Output Pooling}{20}%
-\contentsline {subsubsection}{\numberline {3.1.3.1}Average Pooling}{20}%
-\contentsline {subsubsection}{\numberline {3.1.3.2}Multi-Head Self-Attention Pooling}{21}%
-\contentsline {subsubsection}{\numberline {3.1.3.3}Transformer Pooling}{22}%
-\contentsline {subsection}{\numberline {3.1.4}Training}{23}%
-\contentsline {subsection}{\numberline {3.1.5}Testing and Reporting Metrics}{24}%
-\contentsline {subsection}{\numberline {3.1.6}Loss Functions Experiments}{25}%
-\contentsline {subsection}{\numberline {3.1.7}Hyperspheric Loss Experiments}{25}%
-\contentsline {subsection}{\numberline {3.1.8}Base comparison}{27}%
-\contentsline {subsection}{\numberline {3.1.9}Pooling Experiments}{29}%
-\contentsline {subsubsection}{\numberline {3.1.9.1}Additional settings}{30}%
-\contentsline {chapter}{Chapter 4.\hspace *{1em}Loss Complexity}{32}%
-\contentsline {section}{\numberline {4.1}Experimental Design}{33}%
-\contentsline {subsubsection}{\numberline {4.1.0.1}Experimental Variables}{33}%
-\contentsline {section}{\numberline {4.2}Resuts}{34}%
-\contentsline {chapter}{Chapter 5.\hspace *{1em}Parameter Efficiency}{37}%
-\contentsline {section}{\numberline {5.1}Experimental Design}{37}%
-\contentsline {subsubsection}{\numberline {5.1.0.1}Experimental Variables}{38}%
-\contentsline {section}{\numberline {5.2}Results}{39}%
-\contentsline {chapter}{Appendices}{42}%
-\contentsline {chapter}{Appendix A.\hspace *{1em}Lerma's Appendix}{43}%
-\contentsline {chapter}{Bibliography}{44}%
+\contentsline {subsection}{\numberline {3.1.2}Training}{18}%
+\contentsline {subsection}{\numberline {3.1.3}Testing and Reporting Metrics}{19}%
+\contentsline {subsection}{\numberline {3.1.4}Experimental Variables}{20}%
+\contentsline {subsection}{\numberline {3.1.5}Loss Functions}{20}%
+\contentsline {subsection}{\numberline {3.1.6}Output Pooling}{20}%
+\contentsline {subsubsection}{\numberline {3.1.6.1}Average Pooling}{21}%
+\contentsline {subsubsection}{\numberline {3.1.6.2}Multi-Head Self-Attention Pooling}{22}%
+\contentsline {subsubsection}{\numberline {3.1.6.3}Transformer Pooling}{23}%
+\contentsline {subsection}{\numberline {3.1.7}Loss Functions Experiments}{23}%
+\contentsline {subsection}{\numberline {3.1.8}Hyperspheric Loss Experiments}{24}%
+\contentsline {subsection}{\numberline {3.1.9}Loss Function Experiments}{26}%
+\contentsline {subsection}{\numberline {3.1.10}Pooling Experiments}{28}%
+\contentsline {subsubsection}{\numberline {3.1.10.1}Additional settings}{29}%
+\contentsline {chapter}{Chapter 4.\hspace *{1em}Loss Complexity}{31}%
+\contentsline {section}{\numberline {4.1}Experimental Design}{32}%
+\contentsline {subsubsection}{\numberline {4.1.0.1}Experimental Variables}{32}%
+\contentsline {section}{\numberline {4.2}Resuts}{33}%
+\contentsline {chapter}{Chapter 5.\hspace *{1em}Parameter Efficiency}{36}%
+\contentsline {section}{\numberline {5.1}Experimental Design}{36}%
+\contentsline {subsubsection}{\numberline {5.1.0.1}Experimental Variables}{37}%
+\contentsline {section}{\numberline {5.2}Results}{38}%
+\contentsline {chapter}{Appendices}{41}%
+\contentsline {chapter}{Appendix A.\hspace *{1em}Lerma's Appendix}{42}%
+\contentsline {chapter}{Bibliography}{43}%
 \contentsline {chapter}{Index}{48}%
 \contentsline {chapter}{Vita}{49}%

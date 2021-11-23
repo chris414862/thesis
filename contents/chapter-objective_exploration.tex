@@ -1,5 +1,5 @@
-\chapter{Learining Objectives}
-\index{Learining Objectives}
+\chapter{Exploring Learining Objectives}
+\index{Exploring Learining Objectives}
 \label{chapter:objective_exploration}
 
 This chapter explores the extent to which the overall learning objective effects retrieval performance, indicating better alignment with respect to a similarity metric.
@@ -10,53 +10,106 @@ We note that the terms `learning objective' and `loss function' are used in this
 
 
 \section{Experimental Design}
+This section describes the procedures used for out data preparation, training, and evaluation.
+We also describe variations to our model's output that we will explore.
+The base architecture, though, is unchanged from the description in Section \ref{background:model_architectures}.
 \label{chapter:obj_exp|section:exp_design}
 \subsection{Data}
-The experiments in this chapter (and all proceeding chapters) use a dataset consisting of 100,000 images from the Places 205 dataset \citeme{} that have additional English \citeme{}, Hindi \citeme{}, and Japanese \citeme{} spoken descriptions corresponding to each image.
+The experiments in this chapter (and all proceeding chapters) use a dataset consisting of 100,000 images from the Places 205 dataset \cite{zhou2014learning} that have additional English, Hindi \cite{harwath2018interlingua}, and Japanese \cite{ohishi2020trilingual} spoken descriptions corresponding to each image.
 It is important to note that the descriptions from each language are not translations of each other as each speaker is only directed to describe the image and has no knowledge of what was said previously. 
 This means that there is no assumption of alignment in the ordering of objects described or the way in the manner in which the speaker chooses to describe the image.
-The statistics for the descriptions can be found in \citeme{see if all stats are in one place}
+\dftwrds[TODO: make this] The statistics for the descriptions can be found in Figure \dftwrds.
 
 We use a training set of 99,000 datapoints and use the remaining 1,000 datapoints for testing. 
-In cases such as \dftwrds{} in which hyperparameter tuning is performed, a random subset of 1,000 datapoints are extracted from the training set and used for evaluation.
-\subsection{Models}
-\label{section:obj_exp_models}
-The experiments in this chapter all use the same basic implementation for the full encoder function $f_\theta$.
-All viewpoints of the image view are encoded using an image-specific encoder.
-Additionally, each language view has it's own dedicated speech encoder, meaning there are no shared layers/parameters across languages.
-However, the architecture of each language's encoder is identical.
+% In cases in which hyperparameter tuning is performed, such as Section a random subset of 1,000 datapoints are extracted from the training set and used for evaluation.
+% \subsection{Models}
+% \label{section:obj_exp_models}
+% The experiments in this chapter all use the same basic implementation for the full encoder function $f_\theta$.
+% All viewpoints of the image view are encoded using an image-specific encoder.
+% Additionally, each language view has it's own dedicated speech encoder, meaning there are no shared layers/parameters across languages.
+% However, the architecture of each language's encoder is identical.
+%
+% All models used in this work are convolutional neural networks (CNNs) at their core.
+% The details of each CNN architecture are given below.
+%
+% \subsubsection{Image Encoder}
+% The image encoder we use is a resnet CNN published by \citeme[He et al] and is initialized using the weights of a model that has been pre-trained on imagenet \citeme{} object classification.
+% The image encoder has \dftwrds{architecture specs here}.
+% For our dataset the representation of each image output by the image encoder has fixed dimensions and is in $\mathbb{R}^{7\times7\times1024}$.
+% Where 1024 is out embedding size of each super pixel.
+%
+% % This model has been pre-trained on the task of object detection by using the imagenet dataset \citeme{}d
+%
+% \subsubsection{Audio/Speech Encoder}
+% \label{section:speech_encoder}
+% The audio encoder architecture is the same across all languages.
+% It is a resnet CNN introduced by \citeme[Harwath resnet paper].
+% The architecture is similar to the image encoder, but with slight differences in the dimensions in each layer.
+% These differences are a natural result of the inherent differences in the visual and auditory modalities.
+% % presumably a results of the original authors' optimization efforts on the respective modalities.
+% The details of the architectural differences are given in figure \dftwrds[make and reference figure].
+% All audio encoders are randomly initialized.
+%
+% Unlike the image encoder, since spoken utterance is of variable length, the dimensions of the speech output for each encoder are not fixed.
+% To remedy this, for each batch we take each language view and find the longest utterance in the batch.
+% We then pad all other utterances in the respective view to be the same length as the longest.
+% This means the sequence length of each language view is fixed inside a batch, but the sequence lengths vary across languages within a batch and across batches.
+% Thus, letting $i$ denote the $i\th$ batch and $j$ denote the $j\th$ view, we can define $max\_sl_{ij}$ as the maximum sequence length of the utterance of the $j\th$ language view in the $i\th$ batch.
+% Due to the nature of the speech encoder's CNN architecture, the sequence length of the output representation has a reduced length, but is deterministic and we can denote it $max\_sl\_out_{ij}$ for simplicity.
+% For our dataset, $max\_sl\_out_{ij}$ typically ranges from 50 to 500.
+% With this definition we have that the output of each speech encoder is in $\mathbb{R}^{max\_sl\_out_{ij}\times 1024}$.
+% Where 1024 is out embedding size of the output sequence.
+%
+\subsection{Training}
+\label{section:obj_exp_training}
+% In this chapter, all views are encoded with their own view specific model.
+We use the Adam optimization algorithm in all of the following experiments with a momentum setting of .99 \dftwrds[check this].
+We also use a batch size of 128 and a learning rate of .001 with a scheduler. 
+This scheduler enforces a linear warmup schedule (from 0 to .001) through the first 10\% of training steps, and then decreases by a factor of .99 after every 50 steps.
 
-All models used in this work are convolutional neural networks (CNNs) at their core.
-The details of each CNN architecture are given below.
+In this chapter's experiments, all training is done using the full-graph framework of multi-view training as described in Section \ref{section:multiview_framework}.
+This is to simplify experimental variables, such as choosing which view will be the anchor, as well as to give easy access to all information shared between the views.
+The next chapter will explore ways to reduce the complexity of full pairwise comparisons.
 
-\subsubsection{Image Encoder}
-The image encoder we use is a resnet CNN published by \citeme[He et al] and is initialized using the weights of a model that has been pre-trained on imagenet \citeme{} object classification.
-The image encoder has \dftwrds{architecture specs here}.
-For our dataset the representation of each image output by the image encoder has fixed dimensions and is in $\mathbb{R}^{7\times7\times1024}$.
-Where 1024 is out embedding size of each super pixel.
+Importantly, all loss functions under consideration have some component designed to encourage dissimilitude. 
+Without this, predictions can find a trivial local solution by collapsing on constant value for all representations.
+Contrastive loss functions use `negative examples' to serve this role where as loss functions like the hyperspheric loss contain the uniformity objective.
+In either case, we supply the non-positive examples in each batch to these sub-components. 
 
-% This model has been pre-trained on the task of object detection by using the imagenet dataset \citeme{}d
+To be clear, all loss functions draw their negative examples from within their respective batch.
+%InfoNCE, Triplet loss, Masked Margin loss, and Scheduled Masked Margin loss all 
+% The Hyperspheric loss additionally draws the samples for it's uniformity loss term from the examples in the batch.
+% This strategy is in contrast to updating a memory-bank mechanism \citeme in which a much larger number of stale representations are used and periodically updated.
 
-\subsubsection{Audio/Speech Encoder}
-\label{section:speech_encoder}
-The audio encoder architecture is the same across all languages.
-It is a resnet CNN introduced by \citeme[Harwath resnet paper].
-The architecture is similar to the image encoder, but with slight differences in the dimensions in each layer.
-These differences are a natural result of the inherent differences in the visual and auditory modalities.
-% presumably a results of the original authors' optimization efforts on the respective modalities.
-The details of the architectural differences are given in figure \dftwrds[make and reference figure].
-All audio encoders are randomly initialized.
 
-Unlike the image encoder, since spoken utterance is of variable length, the dimensions of the speech output for each encoder are not fixed.
-To remedy this, for each batch we take each language view and find the longest utterance in the batch.
-We then pad all other utterances in the respective view to be the same length as the longest.
-This means the sequence length of each language view is fixed inside a batch, but the sequence lengths vary across languages within a batch and across batches.
-Thus, letting $i$ denote the $i\th$ batch and $j$ denote the $j\th$ view, we can define $max\_sl_{ij}$ as the maximum sequence length of the utterance of the $j\th$ language view in the $i\th$ batch.
-Due to the nature of the speech encoder's CNN architecture, the sequence length of the output representation has a reduced length, but is deterministic and we can denote it $max\_sl\_out_{ij}$ for simplicity.
-For our dataset, $max\_sl\_out_{ij}$ typically ranges from 50 to 500.
-With this definition we have that the output of each speech encoder is in $\mathbb{R}^{max\_sl\_out_{ij}\times 1024}$.
-Where 1024 is out embedding size of the output sequence.
+\subsection{Testing and Reporting Metrics}
+\label{section:obj_exp_testing_rep}
+During inference, for each datapoint, each viewpoint is measured with respect to a similarity function with every viewpoint in other views. 
+We use the dot product as our similarity function.
+Recall at 1, 5, and 10 are then calculated by checking if the correct target viewpoint ranked in the top 1, 5, or 10 most similar.
+% To clarify, if $N$ be the
+% \dftwrds[fix the previous sentence. Merge with explanation below]
+% We report the recall at k scores with $k=1, 5,$ and $10$, which indicates how often the target viewpoint was in the top $k$ closest viewpoints.
+Also, because of space concerns and since are primarily interested in overall alignment in the latent space, for each view pair we report only the average recall at k scores between view pairs.
+That is, for each view pair, two sets of recall at k scores are calculated: 1) a set in which the first view of the pair is treated as the input and the second view is the target, and 2) a set where the second of the pair is treated as the input and the first view is the target.
+These two directions do not necessarily produce the same results, but we did not observe a systematic of substantial deviation from the average among any view pair in any experiment in this work.
+We therefore chose to omit the scores for the individual directions and simply report the average.
 
+Still, we fundamentally distinguish between view pairs between different modalities (i.e. image-speech pairings) and those withing the same modality (speech-speech).
+For convenience, then, we will refer to average results from speech-speech retrieval scores simply as `cross-lingual retrieval results' and average results from speech-image pairings simply as `image retrieval results', acknowledging that retrieving speech utterances from image input is not actually `image retrieval'.
+\subsection{Experimental Variables}
+We separately  explore two sets of experimental variables in this chapter: loss functions and output pooling mechanisms.
+\subsection{Loss Functions}
+The loss functions under consideration were described in detail in Section \ref{chapter:background|section:loss_functions}, but we will explicitly compare:
+\begin{enumerate}
+    \item The hyperspheric loss (Equation \ref{eq:hyperspheric})
+    \item The triplet loss (Equation \ref{eq:triplet_full})
+    \item InfoNCE (Equation \ref{eq:mms} with $M=0$)
+    \item Masked Margin Softmax, M=1 (Equation \ref{eq:mms})
+    \item Masked Margin Softmax, scheduled updates for M following the original work by Ilharco et al. \cite{ilharco2019large}
+    \item Masked Margin Softmax, with adaptive updates as introduced by Monfort et al. \cite{monfort2021spoken}
+
+\end{enumerate}
 \subsection{Output Pooling}
 \label{section:output_pooling}
 As noted in the previous section, the output of each view encoder do not necessarily align across all dimensions. 
@@ -66,7 +119,7 @@ This is also more realistic in terms of retrieval when the set of target viewpoi
 We therefore require some sort of pooling mechanism before similarity scores can be calculated and retrieval can be performed.
 
 
-Experiments in section \dftwrds[put ref later] compare pooling strategy performance empirically, but the following sections describe the basics of each mechanism.
+Experiments in section \ref{section:pooling_experiments} compare pooling strategy performance empirically, but the following sections describe the basics of each mechanism.
 
 \subsubsection{Average Pooling}
 \label{section:average_pooling}
@@ -80,17 +133,17 @@ we calculate $avg\_pool\_len$ as:
 \begin{equation*}
     avg\_pool\_len = \lfloor  len_{ijk} / \text{round}\Big( \frac{max\_sl_{ij}}{max\_sl\_out{ij}} \Big) \rfloor
 \end{equation*}
-Where $max\_sl_{ij}$ and $max\_sl\_out_{ij}$ are defined in the same manner as in section \ref{section:speech_encoder} and $\text{round}(\cdots)$ rounds to the nearest integer.
+Where $max\_sl_{ij}$ and $max\_sl\_out_{ij}$ are defined in the same manner as in section \ref{chapter:background|section:audio_model} and $\text{round}(\cdots)$ rounds to the nearest integer.
 Here $\frac{max\_sl_{ij}}{max\_sl\_out{ij}}$ can be thought of as the reduction ratio from the input sequence length to the output sequence length.
-This calculation follows the same strategy as in \citeme[Harwath's resnet orig or VQ paper].
+% This calculation follows the same strategy as in \citeme[Harwath's resnet orig or VQ paper].
 
 \subsubsection{Multi-Head Self-Attention Pooling}
 \label{section:mh_attn_pooling}
 Considering the simplistic nature of average pooling, we also experiment with using a self attention layer to perform the pooling.
-Previous work \citeme[Ohishi] found that a single headed self-attention layer was beneficial when used \textit{before} the pooling layer (specifically between the second to last and last convolutional layers), but they still used average pooling for their final representation.
+Previous work \cite{ohishi2020trilingual} found that a single headed self-attention layer was beneficial when used \textit{before} the pooling layer (specifically between the second to last and last convolutional layers), but they still used average pooling for their final representation.
 
-Inspired by this result and the recent proliferation and success of Transformer layers \citeme, which uses multi-headed self-attention (MHSA), we attempt to use this as an adaptive pooling mechanism for our final representation.
-Specifically, we use 8 heads and an positional encoder layer similar to \citeme and we chose the larges $max_sl_out_ij$ to be the maximum sequence length for the positional encoder.
+Inspired by this result and the recent proliferation and success of Transformer layers, which uses multi-headed self-attention (MHSA), we attempt to use this as an adaptive pooling mechanism for our final representation.
+Specifically, we use 8 heads and an positional encoder layer and we chose the larges $max_sl_out_ij$ to be the maximum sequence length for the positional encoder.
 However, unlike the original transformer block, we do not scale the input by $\sqrt{d_{model}}$ and instead scale the positional encoding by $\frac{1}{\sqrt{d_{model}}}$  as we found this produced better results.
 We hypothesize that without the layer norm used after the MHSA layer in the transformer block, the original scaling gives final representations an overly large L2 norm which negatively effects our similarity based losses.
 We also note, though, that adding a layer norm layer and a residual connection as in the original transformer block did not resolve this issue.
@@ -113,45 +166,9 @@ We also experiment with using a full Transformer block and using a single embedd
 We used the same settings and adaptations as described in \ref{section:mh_attn_pooling} regarding number of heads, positional encoding, prepending a learned embedding, and masking.
 We chose to use 2048 as the internal feed forward dimension, which is the same as the original Transformer.
 
-\subsection{Training}
-\label{section:obj_exp_training}
-% In this chapter, all views are encoded with their own view specific model.
-We use the Adam optimization algorithm in all of the following experiments. 
-The optimizer settings can be found in figure \dftwrds[make this later].
-We also use a batch size of 128 and a learning rate of .001 with a scheduler. 
-This scheduler enforces a linear warmup schedule (from 0 to .001) through the first 10\% of training steps, and then decreases by a factor of .99 after every 50 steps.
-
-In this chapter's experiments, all training is done using the full-graph framework of multi-view training as described in Section \ref{section:full_graph_framework}.
-This is to simplify experimental variables, such as choosing which view will be the anchor, as well as to give easy access to all information shared between the views.
-The next chapter will explore ways to reduce the complexity of full pairwise comparisons.
-
-Importantly, all loss functions under consideration have some component designed to encourage dissimilitude. 
-Without this, predictions can find a trivial local solution by collapsing on constant value for all representations.
-Contrastive loss functions use `negative examples' to serve this role where as loss functions like the hyperspheric loss contain the uniformity objective.
-In either case, we supply the non-positive examples in each batch to these sub-components. 
-
-To be clear, InfoNCE, Triplet loss, Masked Margin loss, and Scheduled Masked Margin loss all draw their negative examples from within their respective batch.
-The Hyperspheric loss additionally draws the samples for it's uniformity loss term from the examples in the batch.
-This strategy is in contrast to updating a memory-bank mechanism \citeme in which a much larger number of stale representations are used and periodically updated.
-
-
-\subsection{Testing and Reporting Metrics}
-\label{section:obj_exp_testing_rep}
-During inference, for each pair of views, weeach viewpoint in each view in the evaluation set is measured against all viewpoints in each other view in the evaluation set.
-To clarify, if $N$ be the
-\dftwrds[fix the previous sentence. Merge with explanation below]
-
-We report the recall at k scores with $k=1, 5,$ and $10$, which indicates how often the target viewpoint was in the top $k$ closest viewpoints.
-Also, because of space concerns and since are primarily interested in overall alignment in the latent space, for each view pair we report only the average recall at k scores between view pairs.
-That is, for each view pair two sets of recall at k scores are calculated: 1) a set in which the first view of the pair is treated as the input and the second view is the target, and 2) a set where the second of the pair is treated as the input and the first view is the target.
-These two directions do not necessarily produce the same results, but we did not observe a systematic of substantial deviation from the average among any view pair in any experiment in this work.
-We therefore chose to omit the scores for the individual directions and simply report the average.
-
-Still, we fundamentally distinguish between view pairs between different modalities (i.e. image-speech pairings) and those withing the same modality (speech-speech).
-For convenience, then, we will refer to average results from speech-speech retrieval scores simply as `cross-lingual retrieval results' and average results from speech-image pairings simply as `image retrieval results', acknowledging that retrieving speech utterances from image input is not actually `image retrieval'.
 
 \subsection{Loss Functions Experiments}
-This chapter's experiments involve \dftwrds[insert final number] distinct loss functions: InfoNCE, hyperspheric loss, triplet loss, masked margin loss, and scheduled mml. 
+This chapter's experiments involve distinct loss functions: InfoNCE, hyperspheric loss, triplet loss, masked margin loss, and scheduled mml. 
 We compare performance of each directly in section \ref{section:direct_compare}.
 However, the hyperspheric loss contains many hyperparameters that are unique to it.
 Also, this loss function has never been applied to this task so optimal hyperparameters have not previously been studied.
@@ -164,24 +181,24 @@ After comparing loss functions, we also experiment with different pooling strate
 
 \subsection{Hyperspheric Loss Experiments}
 \label{section:hyperspheric_tuning}
-As the hyperspheric loss is markedly different than the loss functions previously explored on this dataset, we chose to tune the uniformity sub-loss weighting.
-We chose this hyperparameter because it appeared to be the most impactful to the final results of the original paper \citeme[hsphere paper].
+As the hyperspheric loss is markedly different than the loss functions previously explored on this dataset, we chose to tune the uniformity sub-loss weighting, $\lambda_{unif}$.
+We chose this hyperparameter because it appeared to be the most impactful to the final results of the original paper \cite{wang2020understanding}.
 There are in fact several hyperparameters available for adjustment for the hyperspheric loss, but due to time constraints we were unable to tune the others.
 We chose an optimization scheme of staring with the baseline value (1.0), and decreasing by $.25$ until performance ceased to increase. 
 We kept all other hyperparameters constant during this tuning. 
-In particular, we held the alignment loss weight at 1.0.
+In particular, we held the alignment loss weighting, $\lambda_{align}$ at 1.0, $t=2$, and $\alpha=2$.
 
-We used the encoder implementations described in \ref{section:obj_exp_models} and used average pooling to combine the final output representations
+We used the encoder implementations described in \ref{background:model_architectures} and used average pooling to combine the final output representations
 
 
 \input{contents/tables/objective_comparisons/hyperspheric_image_ret_exps.tex}
 \input{contents/tables/objective_comparisons/hyperspheric_cling_ret_exps.tex}
 
-The results for the image-audio (image retrieval) view pairings can be found in figure \dftwrds and the audio-audio pairs (aka cross-lingual) shown in figure \dftwrds.
+The results for the image-audio (image retrieval) view pairings can be found in figure \ref{table:hyper_img_ret} and the audio-audio pairs (aka cross-lingual) shown in figure \ref{table:hyper_cling}.
 As can be seen in both image retrieval and cross-lingual settings, the overall performance of the hypersheric loss is highly dependent on the weighting of the uniformity sub-loss.
 In all following experiments, we use the best performing uniformity weighting, .75.
 
-\subsection{Base comparison}
+\subsection{Loss Function Experiments}
 \label{section:direct_compare}
 
 This set of experiments compares the results of several prominent loss functions that been applied to image retrieval tasks.
@@ -191,10 +208,10 @@ Training, inference, and evaluation procedures are as described in sections \ref
 % nd pooling strategy.
 % Specifically, these experiments use a resnet50 image encoder model described in section \dftwrds[ref later] and separate 
 
-\input{contents/tables/objective_comparisons/objectives_comparison_img_ret.tex}
-\input{contents/tables/objective_comparisons/objectives_comparison_cling_ret.tex}
+\input{contents/tables/objective_comparisons/objectives_comparison_all.tex}
+% \input{contents/tables/objective_comparisons/objectives_comparison_cling_ret.tex}l
 
-Results for image retrieval pairings can be found in Table \ref{table:Objective_img_ret} and cross-lingual results can be found in Table \ref{table:Objective_cling_ret}.
+Results for image retrieval pairings and cross-lingual results can be found in Table \ref{table:Objective_results}.
 We highlight several findings from this experiment:
 \begin{enumerate}
     \item InfoNCE loss consistently outperforms all other losses in both image retrieval and cross-lingual settings.

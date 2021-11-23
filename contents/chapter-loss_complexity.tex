@@ -20,7 +20,7 @@ We use same Adam optimizer with a learning rate of .001 and InfoNCE loss.
 
 \subsubsection{Experimental Variables}
 
-Our main experimental variables involve the multi-view training framework outlined in Section \ref{section:backg_contrast_framework}.
+Our main experimental variables involve the multi-view training framework outlined in Section \ref{section:multiview_framework}.
 Instead of using all view-pairs (i.e. the \textit{full-graph}), we try three variations of the \textit{anchor} framework.
 
 In the first we simply use the image view as the anchor.
@@ -32,7 +32,7 @@ Specifically, for each datapoint we average the final representations of each vi
 This effectively creates a centroid for each datapoint. % positively associated viewpoint.
 Within the InfoNCE loss, our intuition is that positively associated viewpoints will be drawn closer to their own centroid, while being pushed away from centroids of other datapoints.
 
-In the third variation, we deviate slightly from the multiview contrastive framework of \citeme and use an adapting the average view as our anchor.
+In the third variation, we deviate slightly from the multiview contrastive framework of \cite{tian2020contrastive} and use an adapting the average view as our anchor.
 This adapting average view changes according to which view is being contrasted.
 To be concrete, we iterate over each view in a batch and for each view we use the average of all other views as the contrasting view for the InfoNCE loss.
 This differs from our second variation in that instead of a fixed full average, which will contain in it the information from any view contrasted with it, we instead remove the information from the view being contrasted.

@@ -1,32 +1,32 @@
 \chapter{Introduction}
 \index{Introduction@\emph{Introduction}}%
 
-Recent years have seen an increasing research interest into using multi-modal grounding techniques to bolster classic natural language processing (NLP) and automated speech recognition (ASR) tasks \citeme.
-Among these have been efforts to use information from visual modalities such as images to improve the performance of neural machine translation (MT) and ASR models \citeme.
-These research efforts are often motivated by the intuition that humans most often learn language through processes that involve resolving relations and co-occurences between input from a source modality (most typically spoken language), with that of input from sensory obtained from their environment.
+Recent years have seen an increasing research interest into using multi-modal grounding techniques to bolster classic natural language processing (NLP) and automated speech recognition (ASR) tasks.
+% Grounded MT
+Among these have been efforts to use information from visual modalities such as images to improve the performance of neural machine translation (MT) and ASR models \cite{ huang2020unsupervised, srinivasan2020fine, harwath2018interlingua,ohishi2020trilingual}.
+These research efforts are often motivated by the intuition that humans most often learn language through processes that involve resolving relations and co-occurences between a source modality (most typically spoken language), with that of input from sensory obtained from their environment.
 
 Therefore it is a reasonable hypothesis to assert that the addition of co-occurring contextual information from modalities such as vision would be likely to aid in many natural language understanding tasks. 
-% Grounded MT
-However, \citeme[Caglayan 2019 "Probing..."] noted that research efforts, starting with the multimodal machine translation (MMT) shared task of the First Conference on Machine Translation have not yet shown that that the addition of co-occurring visual information substantially improves MT performance.
-\citeme[Caglayan] did show however, that when linguistic information is scarce or noisy models using visual information are better able to recover from the missing information during translation.
-Additionally, \citeme[Huang et al "Unsupervised MMT..."] showed that in unsupervised MT settings they were able to incorporate the visual modality to consistently improve translation without aligned corpi for training.
-Given the linear nature of modern neural architectures, these results would seem to indicate that latent visual representations are able to, in some fashion, improve alignments of the embedded representations of sentences in different languages.
+However, Calgayan et al. \cite{caglayan2019probing} noted that research efforts in multimodal machine translation (MMT) have not yet clearly shown that that the addition of co-occurring visual information substantially improves MT performance.
+Their work did show however, that when linguistic information is scarce or noisy, models using visual information are better able to recover from the missing information during translation.
+Additionally, Huang et al. \cite{huang2020unsupervised} showed that in unsupervised MT settings they were able to incorporate the visual modality to consistently improve translation without aligned corpi for training.
+These results would seem to indicate that latent visual representations \textit{are} able to, in some fashion, improve alignments of the internal representations of sentences in different languages, but the mechanism by which this occurs is not well understood.
 
 %ASR 
-Similarly in the ASR domain,  \citeme[Srinivasan, "Fine-grained grounding..."] found that while visual information did not necessarily improve performance of speech recognition on clean datasets, when degrading the audio input using word masking their novel neural architecture was better able to  recover the original word when leveraging features from a visual modality.
+Similarly in the ASR domain, Srinivasan et al. \cite{srinivasan2020fine} found that while visual information did not necessarily improve performance of speech recognition on clean datasets, when degrading the audio input using word masking their novel neural architecture was better able to  recover the original word when leveraging features from a visual modality.
 
-These empirical observations seem to suggest that, contrary to intuition, additional information (in the form of co-occurring modalities carrying mutual semantic information) does not substantially effect neural models' ability to recognize and utilize the patterns present in the primary source modality.
+These empirical observations seem to suggest that, contrary to intuition, additional information (in the form of co-occurring modalities carrying mutual semantic information) does not necessarily substantially effect neural models' ability to recognize and utilize the patterns present in the primary source modality.
 
 % Translational knowledge transfer
 Parallel lines of research, though, into multilingual machine translation have shown that the addition of new language pairs \textit{does} tend to improve transnational performance of all models. 
-This phenomena has been termed transnational knowledge transfer \citeme[Dabre, "A comprehensive Survey ..."].
-This was first shown by ... \citeme[Google zero shot paper] and also ....
+This phenomena has been termed transnational knowledge transfer \cite{dabre2020comprehensive} and  was first shown by Johnson et al.\cite{johnson2017google}.
+They used a single neural model to perform 12-way multilingua translation showing improvements in several language pairs over conventional models trained on a single language pair.
 These results align, very generally speaking, with the intuition that richer information sources should enable pattern recognition algorithms, such as neural networks, to more quickly lock on the tiny variations in the input that are semantically relevant. 
 
 % Interlingua paper and Trilingual embeddings show mutual embedding space improves performance
     % MT and Google's zero-shot paper shows
-This line of reasoning is further bolstered by results by \citeme[Harwath interlingua] which showed that the addition of visual context (in the form of pre-trained image features) approximately doubled the recall scores of cross-lingual audio retrieval between Hindi and English image descriptions.
-\citeme[Ohishi et al.] also showed that retrieval scores between audio-visual and visual-audio modalities improved for all pairs when augmenting \citeme[Harwaths] dataset with Japanese descriptions.
+This line of reasoning is further bolstered by results by Harwath et al. \cite{harwath2018interlingua} which showed that the addition of visual context (in the form of pre-trained image features) approximately doubled the recall scores of cross-lingual audio retrieval between Hindi and English image descriptions.
+Ohishi et al. \cite{ohishi2020trilingual} extended this line of research by showing that retrieval scores between audio-visual and visual-audio modalities improved for all pairs when augmenting English and Hindi Places 205 \cite{zhou2014learning} image caption dataset with Japanese descriptions.
 
 % These results are especially encouraging considering the lack of lexical and syntactic overlap between English, Hindi, and Japanese.
 % Although it is notoriously difficult to compare translation results between different \citeme{runner up paper from ACL '20} language pairs, at least among English speakers there is a well established hierarchy that delineates which languages are most difficult for the average English speaker to learn \citeme{DOD list}.
@@ -36,38 +36,41 @@ This line of reasoning is further bolstered by results by \citeme[Harwath interl
 
 % ST and DLPs - Reason why it might work
 
-As of yet it remains unclear what extent visual grounding might aid in ST and MT, though, or what might be the best way to incorporate visual information into these tasks.
+As of yet it remains unclear, though, what extent visual grounding might aid in ST and MT, though, or what might be the best way to incorporate visual information into these tasks.
 
 % Intoduce task
 % Retrieval
 % TODO: Look at prev papers for task motivation
-In this work we investigate task of image and multi-lingual utterance retrieval.
-Concretely, in image retrieval the task is to take a spoken utterance that describes an image and retrieve the corresponding image from a pool of candidate images (in our case the pool is the entire annotated dataset).
-The dataset used contains three descriptions of each image, each description in one of three distinct languages: English, Hindi, or Japanese.
-Likewise in multi-lingual utterance retrieval, the task is to retrive an utterance in a target language that describes the same image as an utterance in a given source language utterance.
-This task does not use the mutual image at inference time, but does not prohibit the use of the shared image during training.
+In this work we investigate the ability of modern neural architectures to produce semanticly  aligned  embedding spaces. 
+We do this by assessing our models' performance on spoken image and multi-lingual utterance retrieval as a proxy for mutual alignment.
+Concretely, the task of spoken image retrieval  is to take a spoken utterance that describes an image and retrieve the corresponding image from a pool of candidate images (in our case the pool is the entire annotated dataset).
+The dataset we use contains three descriptions of each image, each description in one of three distinct languages: English, Hindi, or Japanese.
+Likewise in cross-lingual utterance retrieval, the task is to retrive an utterance in a target language that describes the same image as an utterance in a given source language utterance.
+% This task does not use the mutual image at inference time, but does not prohibit the use of the shared image during training.
 
 % Task specifics
 It is worth emphasizing that in this task and in our dataset there is no assumption of lexical or syntactic alignment between language utterances.
 That is, speakers may choose to describe the same image in completely different manners, 
 using words and expressions that do not directly align with what was spoken in another language about the same image.
-The lack of syntactic alignment means that lexical and syntactic co-occurence information will be largely inconsistent or even absent.
+This lack of syntactic alignment means that lexical and syntactic co-occurence information will be largely inconsistent or even absent.
 Nevertheless, since every utterance share the same grounded reference there should intuitively be consistent mutual semantic information shared amongst each training image and utterance triplet.
 
-The task of retrieval was chosen because it can both serve as a proxy to measure latent representation alignment (since similarity measures are inherently used in the retrieval step), and also has more immediate practical applications, specifically in utterance to image retrieval.
-Using spoken utterances for data retrieval typically requires a large amount of hand engineering of many sub-components.
+The task of retrieval not only  serves as a proxy for latent  representation alignment but also has more immediate practical applications.
+Using speech to describe an image is a more natural interface than text when describing visual phenomena.
+However, speech recognition systems requires a large amount of hand engineering of many sub-components.
 These include, but are not limited to: acoustic, pronunciation, and language models. 
 Predictive distributions between each sub-component are often combined using a large finite state transducer.
-The task of creating a new ASR system is often a laborious task that can be both time and data intensive.
+% The task of creating a new ASR system is often a laborious task that can be both time and data intensive.
 Furthermore, once an ASR system is built, at least using current technology, the highly tuned sub-components cannot be repurposed into submodules of ASR systems for other languages. 
 Thus an entirely new system must be built for each new language.
 
 This work explores instead the extent to which latent feature representations from distant languages can be embedded into the same semantic vector space.
 End-to-end (E2E) neural network encoders are used to produce these representations, thereby eliminating much of the sub-component specific implementation overhead needed to build classic ASR models for retrieval.
+Embedding all languages in the same space also provides the potential benefits of translational transfer learning effects described above.
 
 There are still many aspects of E2E ASR models, though, that are not well understood, especially in multi-lingual settings.
-In particular, it the exact translational mechanism in modern neural models is difficult pinpoint so it is unclear whether mutually aligned semantic embedding spaces are a 
-As \citeme[variations bounds on MI] has noted, even the general task of optimizing MI has shown to have deteriorating and even degrading returns in downstream tasks.
+In particular, the exact translational mechanism in modern neural models is difficult pinpoint so it is unclear whether mutually aligned semantic embedding spaces are a necessary component of a multi-lingual translation model.
+Also, as Tschannen et al. \cite{tschannen2019mutual} has noted, even the general task of optimizing mutual information (MI) has been shown to have deteriorating and even degrading returns in downstream tasks.
 
 This lack of clear understanding motivates the experiments presented in this work.
 In particular, this work attempts to address three questions:
@@ -82,14 +85,15 @@ In particular, this work attempts to address three questions:
 % \textit{Goal}
 \begin{enumerate}
 % 1. Loss func exploration
-    \item What type of learning objective (i.e. loss function) results in the best alignment of image and multi-lingual utterances (as measured by average retrieval scores)?
+    \item What type of learning objective (i.e. loss function) results in the best alignment of image and multi-lingual utterances as measured by average retrieval scores?
 % 2. Loss function complexity
-    \item Since contrastive learning objectives rely on pairs of negative examples, aligning multiple modalities in the same representation space suffers a exponential increase in loss terms with the pairing each new modality.
+    \item Aligning multiple modalities in the same representation space suffers a quadratic increase in loss terms with the pairing each new modality, which can complicate optimization.
 To what extent can this be mitigated?
 
 % 3. Parameter efficiency
-\item Similarly, it is reasonable to assume that at least some of the task of modelling linguistic information might be shared in internal model parameters (e.g. recognizing phonemes shared between languages), which is one explanation for results demonstrated in previous work on translational knowledge transfer. 
-    Can this phenomena be leveraged to reduce the model size/memory requirements of aligning a new language to the shared representation space?
+\item Similarly, training an entirely new encoder for each model is potentially wasteful.
+    %it is reasonable to assume that at least some of the task of modelling linguistic information might be shared in internal model parameters (e.g. recognizing phonemes shared between languages), which is one explanation for results demonstrated in previous work on translational knowledge transfer. 
+    Can model visual grounding aid parameter when multiple languages share encoder paramters?
 \end{enumerate}
 
 % The rest of this thesis is organized as follows: chapter \ref{} presents background information on the techniques used for the experiments.
