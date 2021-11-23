@@ -1,0 +1,59 @@
+\begin{table}
+    \centering
+    \begin{tabular}{l|l|lll}
+    \toprule
+    {} & Full & Shared: Basic & Seq. Emb. & Chan. Emb.\\
+    \midrule
+    Best Epoch  &                      26 &                     19 &                            17 &                        11 \\
+    \midrule
+    Image Ret. &&&&\\
+    \midrule
+    \midrule
+    E\&I.avgR1   &                  18.05\% &                 11.35\% &                         7.35\% &                     2.30\% \\
+    H\&I.avgR1   &                  14.70\% &                  7.40\% &                         4.40\% &                     2.20\% \\
+    J\&I.avgR1   &                  28.00\% &                  8.60\% &                         4.60\% &                     2.25\% \\
+    \midrule
+    E\&I.avgR5   &                  41.55\% &                 31.05\% &                        22.50\% &                     8.40\% \\
+    H\&I.avgR5   &                  36.10\% &                 21.20\% &                        14.10\% &                     8.65\% \\
+    J\&I.avgR5   &                  59.20\% &                 25.85\% &                        16.45\% &                     7.60\% \\
+    \midrule
+    E\&I.avgR10  &                  54.55\% &                 42.70\% &                        32.10\% &                    12.80\% \\
+    H\&I.avgR10  &                  45.85\% &                 29.70\% &                        20.20\% &                    13.45\% \\
+    J\&I.avgR10  &                  72.35\% &                 35.60\% &                        23.20\% &                    12.25\% \\
+    \midrule
+     Cross-Ling&&&&\\
+    \midrule
+    \midrule
+    H\&E.avgR1   &                  11.55\% &                  2.25\% &                         1.55\% &                     0.20\% \\
+    J\&E.avgR1   &                  11.40\% &                  2.80\% &                         1.75\% &                     0.30\% \\
+    J\&H.avgR1   &                  10.50\% &                  1.35\% &                         1.50\% &                     0.15\% \\
+    \midrule
+    H\&E.avgR5   &                  27.25\% &                  8.35\% &                         6.85\% &                     1.55\% \\
+    J\&E.avgR5   &                  29.00\% &                 10.05\% &                         6.60\% &                     1.50\% \\
+    J\&H.avgR5   &                  27.30\% &                  5.80\% &                         5.45\% &                     1.20\% \\
+    \midrule
+    H\&E.avgR10  &                  37.55\% &                 14.10\% &                        11.00\% &                     3.10\% \\
+    J\&E.avgR10  &                  41.30\% &                 15.45\% &                        10.00\% &                     2.95\% \\
+    J\&H.avgR10  &                  36.80\% &                 10.40\% &                         8.45\% &                     1.65\% \\
+    \bottomrule
+    \end{tabular}
+
+    % \begin{tabular}{llll}
+    % \toprule
+    % {} & Basic & Chan. Dim. Tok. & Seq Dim. Tok. \\
+    % \midrule
+    % Best Epoch          &                     19 &                        11 &                            17 \\
+    % hin\&eng\_dot\_avg\_r1  &                  2.25\% &                     0.20\% &                         1.55\% \\
+    % hin\&eng\_dot\_avg\_r5  &                  8.35\% &                     1.55\% &                         6.85\% \\
+    % hin\&eng\_dot\_avg\_r10 &                 14.10\% &                     3.10\% &                        11.00\% \\
+    % jap\&eng\_dot\_avg\_r1  &                  2.80\% &                     0.30\% &                         1.75\% \\
+    % jap\&eng\_dot\_avg\_r5  &                 10.05\% &                     1.50\% &                         6.60\% \\
+    % jap\&eng\_dot\_avg\_r10 &                 15.45\% &                     2.95\% &                        10.00\% \\
+    % jap\&hin\_dot\_avg\_r1  &                  1.35\% &                     0.15\% &                         1.50\% \\
+    % jap\&hin\_dot\_avg\_r5  &                  5.80\% &                     1.20\% &                         5.45\% \\
+    % jap\&hin\_dot\_avg\_r10 &                 10.40\% &                     1.65\% &                         8.45\% \\
+    % \bottomrule
+    % \end{tabular}
+\caption{Parameter efficiency strategies. One encoder for all languages. Cross-lingual retrieval resutls.}
+\label{table:param_eff}
+\end{table}

@@ -1,5 +1,6 @@
 \chapter{Loss Complexity}
 \index{Loss Complexity}
+\label{chapter:loss_complexity}
 
 Previous work in this area has noted that fully optimizing retrieval performance requires the tuning of each direction of each pair of views being optimized \citeme[Ask Dr. Harwath].
 Since the number of pairings grows quadratically with each additional view, this can result in an untennable number of parameters to tune.
@@ -9,13 +10,15 @@ It is as yet unclear how the increase in number of views/modalities effects this
 We hypothesize that as the number of additional views are added, all of which contain some aspect of the underlying latent information, the number of necessary negative examples might decrease.
 These ideas motivate this chapter's experiments in which we explore strategies reduce the growth to a linear increase and assess the impact on performance.
 
-We start with our experimental design in Section \ref{section:loss_comp_exp_design}, then we discuss our results in Section \ref{section:loss_comp_results}.
+We start with our experimental design in Section \ref{chapter:loss_comp|section:exp_design}, then we discuss our results in Section \ref{section:loss_comp_results}.
 
 \section{Experimental Design}
-\label{section:loss_comp_exp_design}
-Most aspects of our experimental setup are identical to Section \ref{section:loss_comp_exp_design}, including the dataset and encoder architectures.
+\label{chapter:loss_comp|section:exp_design}
+Most aspects of our experimental setup are identical to Section \ref{chapter:obj_exp|section:exp_design}, including the dataset and encoder architectures.
 Again each view has a dedicated encoder and final representations are obtained by average pooling.
 We use same Adam optimizer with a learning rate of .001 and InfoNCE loss.
+
+\subsubsection{Experimental Variables}
 
 Our main experimental variables involve the multi-view training framework outlined in Section \ref{section:backg_contrast_framework}.
 Instead of using all view-pairs (i.e. the \textit{full-graph}), we try three variations of the \textit{anchor} framework.
@@ -39,14 +42,27 @@ For each of the three variations we train a new set of encoders from scratch all
 \section{Resuts}
 \label{section:loss_comp_results}
 The recall at 1, 5, and 10 results for image retrieval for these three variation can be seen in Table \ref{table:complexity_opts_img_ret}.
+The Full-Graph column is the model trained with full-graph InfoNCE loss.
 \input{contents/tables/complexity/complexity_opts_img_ret.tex}
-Somewhat surprisingly, image retieval performance increased when removing the cross-lingual objective from the loss.
-In one sense, it would seem natural that solely focusing on the image retrieval task in the loss function should produce beter image retrieval scores.
+
+Somewhat surprisingly, image retieval performance increased slightly in many instances in the image view anchor training scheme.
+% when removing the cross-lingual objective from the loss.
+In one sense, it would seem natural that solely focusing on the image retrieval task in the loss function should produce better image retrieval scores.
 However, when viewed from the lens of shared mutual information, one might expect that, at an abstract level at least, removing one language encoder's incentive to learn associations with other languages would harm the model's ability to properly encode speech into a space that is shared by all languages and images.
+Results from Harwath et al. \cite{harwath2018interlingua} seemed to confirm this notion of increased cross-lingual mutual information improving image retrieval.
+Their experiments showed a 3-4\% increase in recall at 5 scores for English and Hindi image retrieval (one direction, no averaging).
+% \input{contents/tables/complexity/complexity_opts_img_ret_decomp.tex}
 
-This indicates that there might be some language or cultually specific tendencies present in each language view that co-occur consistently with certain aspects of the image set that have little to no co-occurence with the descriptions of other languages.
-Considering the results from Harwath et al. \cite{} and Ohishi et al. \cite{ohishi2020trilingual}, it seems likely that there is a benifit from a shared multi-lingual
+The second variation was unable to learn under it's respective setting.
+This is perhaps due to instability caused by having the representation of a view present in both sides of the contrasting loss.
+Further investigation is needed to properly explain this though.
 
+The third variation, though, managed to learn but was consistently outperformed by the image anchor scheme.
+
+Looking at the cross-lingual retrieval results in Figure \ref{table:complexity_opts_cling_ret} tells a slightly different story.
+Here the image anchor scheme's performance deteriorates drastically, whereas the third variation (the adaptive average) is able to maintain relatively strong performance as compared withe full-graph setting.
+This is an encouraging result as it indicates there may be potential to make improvements to the scheme (such as a more sophisticated averaging mechanism) that would further close the gap for all view pairs.
 
 \input{contents/tables/complexity/complexity_opts_cling_ret.tex}
+
 

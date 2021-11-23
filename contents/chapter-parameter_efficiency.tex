@@ -1,8 +1,56 @@
-
 \chapter{Parameter Efficiency}
 \index{Parameter Efficiency}
+Up to this point we have encoded each view's representation with it's own encoder model.
+This can become quite taxing on GPU memory as the number of views to be encoded increases.
+One might expect though, that there may be certain subtasks being performed the language encoders that are shared across languages (such as recognition of common phonemes).
+In this chapter we explore the potential for parameter sharing among the language encoders.
+Previous work has also explored this topic \citeme[google paper], but this is the first time we are aware of that has explored this effect in visually grounded settings.
+
+\section{Experimental Design}
+\label{chapter:param_eff|section:exp_design}
+Most of the experimental settings are the same as described Section \ref{chapter:loss_comp|section:exp_design}, however in this chapter we only use the full-graph training scheme.
+We use the sam Adam optimizer, a learning rate of .001, the average pooled model output as each view's final representation, and the InfoNCE loss.
+The only differences are outlined below.
+\subsubsection{Experimental Variables}
+\label{chapter:param_eff|section:exp_variables}
+We experiment with three variations of a shared language encoder. 
+In the \textit{basic} variation, we simply have one shared audio encoder and feed all language input into it.
+
+The second and third variations are inspired by Johnson et al. \cite{johnson2017google} who prepend a language specific token to a multilingual neural translation model.
+Unlike \cite{johnson2017google}, we do not use recurrent network, but a CNN. 
+More importantly, though, our encoder operates on the speech signal, which contains orders of magnitude more time steps.
+We therefore explored two alternate options for injecting prior language knowledge into our CNN encoder.
+
+
+For both of these variations, we started by appending a learned language-specific embedding to the log Mel filter bank  (LMFB) spectrogram feature dimension of the input.
+Since each input utterance contains two dimensions/axes (the first being the number of time steps and the second the LMFBs), this means we concatenate the language embedding to the second dimension.
+This required expanding the filter sizes of the first convolutional layer.
+We chose this strategy as appending the language embedding to the input feature dimension seemed a natural choice.
+We chose to use a small eight dimension embedding for all the langauge embedding.
+
+Next we applied additional layer-specific and language-specific embeddings to each of the intermediate representations between the four residual blocks of the encoder.
+However, the decision over which dimension/axis to append the layer and language specific embedding not as clear-cut as in the input. 
+This is because the meaning of each dimension cannot be so clearly interpreted.
+Thus, the remaining two variations we explore in our experiments involve 1) appending the language embedding to the first dimension (after the batch) and 2) appending the embedding to the last dimension.
+We refer to these two variations as the \textit{channel embedding} and \textit{sequence embedding} respectively.
+
+Note that our encoder's 1D convolutions after the first are implemented using 2D convolutions and kernels with a 1 in the height dimension.
+Hence, when we refer to the `first' dimension this is typically called the channel dimension in conventional CNN nomenclature.
+Likewise, the `second' dimension refers to what is typically called the `width' dimension and plays the role of the current downsampled sequence length.
+The `height' dimension is one for all intermediate representations.
+
+Since the channel embedding variation changes the effective number of features used (and necessarily then increases the filter sizes of all intermediate layers), it has a larger number of parameters than the sequence embedding variation.
 
 \section{Results}
-\input{contents/tables/param_efficiency/param_e_comp_img_ret.tex}
-\input{contents/tables/param_efficiency/param_e_comp_cling_ret.tex}
+The recall at $K=1,5,$ and $10$ results for image and cross-lingual retrieval can be seen in Table \ref{table:param_eff}.
+
+\input{contents/tables/param_efficiency/param_e_comp.tex}
+
+Most noticeably, all shared encoders struggled to compete with the fully parameterized model.
+Surprisingly, though, the basic shared model outperformed both the channel and sequence embedding variations.
+Due to time constraints we were not able to investigate this further, but we find it counter-intuitive that removing parameters and \textit{a-priori} information about the input language would harm performance in this manner.
+
+Another surprising result is that the sequence embedding variation performed much better than the channel embedding variation despite having more parameters.
+Recall that the channel dimension is effectively the feature dimension here.
+
 

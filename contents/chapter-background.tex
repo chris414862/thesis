@@ -64,9 +64,59 @@ There are a number of loss-function in common use for this type of maximization 
 Which one of these loss functions produces optimal results for our particular setting is the subject of the following experiments in this chapter.
 
 \section{Loss Functions}
-There are numerous loss functions that are designed to encourage `similarity' among pairs or groups of datapoi
+There are numerous loss functions that are designed to encourage `similarity' among pairs or groups of datapoints.
+We explore a subset of these in this work an describe the important aspects of each below.
 \subsection{Triplet}
+Triplet loss has perhaps the longest history of use in this task.
+Harwath et al. \cite{harwath2015deep} first introduced the task of spoken image retrieval and used a maximum margin objective between each final unpooled image embedding and final sequence embedding of paired images and utterances.
+This obective eventually became formulated a the the triplet loss.
+
+Generally, triplet losses take an \textit{anchor} embedding/vector $A$, \textit{truthy} embedding $T$ (which is positively associated with the anchor), and a \textit{falsey} embedding $F$, also known as an imposter, that is not associated with the anchor. 
+Then, given a chosen similarity function, the triplet loss can be calculated as:
+\begin{equation}
+\label{orig_triplet_loss}
+    Triplet(A, T, F) = \max(0, S(A, F) - S(A, T) +M)
+\end{equation}
+Where $M$ is some margin to be chosen a hyperparameter (often just 1). 
+This loss effectively pushes the $A$ and $T$ embeddings toward each other and the $A$ and $F$ embeddings away from each other.
+The margin, then, influences how stronly model is encouraged to push or pull the associted embeddings.
+
+This was formalized in \cite{harwath2017unsupervised} for spoken image retrieval by using two triplet losses: one defined with image representaions as anchors, and one with spoken captions as anchors.
+It can be written as:
+\begin{align}
+    \label{retrieval_triplet}
+    T(I_j, C_j, I_j^{imp}, C_j^{imp}) &= \sum_{j=1}^B \Big(\max(0,S(I_j, C_j^{imp}) - S(I_j, C_j) +1) \\
+                                      &{\quad\quad\quad+} \max(0,S(I_j^{imp}, C_j) - S(I_j, C_j) +1)\Big)
+\end{align}
+Where $S$ is a chosen similarity function,  $I_J$ and $C_j$ are the $j\th$  image/caption which are treated as , and $I_j^{imp}$ and $C_j^{imp}$ are the $j\th$ \textit{imposter} samples of an image and caption not associted with the correct image/caption pair.
+In this formulation, the first $\max$ term is effectively the triplet loss when  $I_j$ is viewed as the anchor, $C_j$ is viewed as $T$, and  $C_j^{imp}$ is viewed as $F$.
+The second $max$ term then uses $C_j$ as the anchor and the images in likewise fashion.
+The imposters are sampled from a uniform distribution from within the minibatch.
+
+This form of triplet loss is highly dependent on the imposter samples chosen, since in the final stages of optimization most negative samples will alredy be far from the anchor.
+This motivates hard and semi-hard negative sampling \cite{jansen2018unsupervised} which, generally speaking, seek to sample imposter/negative samples that are very close to the anchor (and there for `hard' to distiguish from the positives).
+This general approach was adapted to the spoken image retriaval task by Harwath et al. \cite{harwath2018jointly} which showed that the use of semi-hard negatives increased retriaval performance.
+
+The accompanying loss function, was formulated more generally in \cite{harwath2019learning} as:
+\begin{align*}
+    \mathcal{L}(\theta) &= T(I_j, C_j, I_j^{imp}, C_j^{imp}) + T((I_j, C_j, \tilde{I}_j^{imp}, \tilde{C}_j^{imp})
+\end{align*}
+Where $T$ is the same as in Equation \ref{retrieval_triplet}. 
+The important difference between the terms is that $\tilde{I}_j^{imp}$ and $\tilde{C}_j^{imp}$ are chosen to be the image and caption that are most similar to their respective anchors in the batch (as measured by the similarity function $S$),
+instead of the uniform distribution as $I_j^{imp}$ and $C_j^{imp}$
+
+
 \subsection{InfoNCE}
+The InfoNCE loss was introduced by Oord et al. \cite{oord2018representation} and when applied to retrieval tasks uses many more negative examples than triplet loss.
+InfoNCE loss effectively computes the categorical cross-entropy loss between an anchor embedding and $K$ other embeddings, only one of which is the positive corresponding embedding.
+It can be written as:
+\begin{align*}
+\mathcal{L}(\theta) = \mathcal{L}_{contrast}(V_1, V_2)+ \mathcal{L}_{contrast}(V_1, V_2)
+\end{align*}
+
+    % \underset{}{\mathbb{E}}\[\frac{e^{S(V_1,C_j}}{}\]
+We are careful to note here that V
+
 \subsection{Masked Margin}
 \subsection{Scheduled Masked Margin}
 \section{Multiview Contrasting Frameworks}
