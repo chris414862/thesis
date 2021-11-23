@@ -67,6 +67,7 @@ Which one of these loss functions produces optimal results for our particular se
 There are numerous loss functions that are designed to encourage `similarity' among pairs or groups of datapoints.
 We explore a subset of these in this work an describe the important aspects of each below.
 \subsection{Triplet}
+\label{section:triplet}
 Triplet loss has perhaps the longest history of use in this task.
 Harwath et al. \cite{harwath2015deep} first introduced the task of spoken image retrieval and used a maximum margin objective between each final unpooled image embedding and final sequence embedding of paired images and utterances.
 This obective eventually became formulated a the the triplet loss.
@@ -85,7 +86,7 @@ This was formalized in \cite{harwath2017unsupervised} for spoken image retrieval
 It can be written as:
 \begin{align}
     \label{retrieval_triplet}
-    T(I_j, C_j, I_j^{imp}, C_j^{imp}) &= \sum_{j=1}^B \Big(\max(0,S(I_j, C_j^{imp}) - S(I_j, C_j) +1) \\
+    T(I_j, C_j, I_j^{imp}, C_j^{imp}) &= \sum_{j=1}^N \Big(\max(0,S(I_j, C_j^{imp}) - S(I_j, C_j) +1) \\
                                       &{\quad\quad\quad+} \max(0,S(I_j^{imp}, C_j) - S(I_j, C_j) +1)\Big)
 \end{align}
 Where $S$ is a chosen similarity function,  $I_J$ and $C_j$ are the $j\th$  image/caption which are treated as , and $I_j^{imp}$ and $C_j^{imp}$ are the $j\th$ \textit{imposter} samples of an image and caption not associted with the correct image/caption pair.
@@ -98,38 +99,134 @@ This motivates hard and semi-hard negative sampling \cite{jansen2018unsupervised
 This general approach was adapted to the spoken image retriaval task by Harwath et al. \cite{harwath2018jointly} which showed that the use of semi-hard negatives increased retriaval performance.
 
 The accompanying loss function, was formulated more generally in \cite{harwath2019learning} as:
-\begin{align*}
+\begin{align}
+    \label{eq:triplet_full}
     \mathcal{L}(\theta) &= T(I_j, C_j, I_j^{imp}, C_j^{imp}) + T((I_j, C_j, \tilde{I}_j^{imp}, \tilde{C}_j^{imp})
-\end{align*}
+\end{align}
 Where $T$ is the same as in Equation \ref{retrieval_triplet}. 
 The important difference between the terms is that $\tilde{I}_j^{imp}$ and $\tilde{C}_j^{imp}$ are chosen to be the image and caption that are most similar to their respective anchors in the batch (as measured by the similarity function $S$),
 instead of the uniform distribution as $I_j^{imp}$ and $C_j^{imp}$
 
 
-\subsection{InfoNCE}
-The InfoNCE loss was introduced by Oord et al. \cite{oord2018representation} and when applied to retrieval tasks uses many more negative examples than triplet loss.
-InfoNCE loss effectively computes the categorical cross-entropy loss between an anchor embedding and $K$ other embeddings, only one of which is the positive corresponding embedding.
-It can be written as:
+\subsection{Masked Margin Softmax (MMS)}
+\label{section:mms_loss}
+The Masked Margin Softmax (MMS) loss was introduced by Ilharco et al. \cite{ilharco2019large} and uses many more negative examples than triplet loss.
+MSS loss effectively computes the categorical cross-entropy loss between an anchor embedding and $K$ other embeddings, only one of which is the positive corresponding embedding.
+Letting $B$ be the batch size and $X$ and $Y$ be the final representations of $B$ samples of two arbitrary informations sources.
+We use information souce to refer to one of the followinge: an image, or a speech utterance from a language in the set of $\mathcal{D}_{lang}$ languages in the dataset. 
+MMS can then be written for a single minibatch as:
+\begin{align}
+    \label{MMS_base}
+    MMS(X,Y) = \frac{1}{B}\sum_{j=1}^B\frac{e^{S(X_j, Y_j)-M}}{e^{S(X_j, Y_j)-M} +\sum_{k=1}^{B} \mathbb{I}[k!=j \land k \notin \mathcal{Z}]e^{S(X_j, Y_k)}}
+\end{align}
+Where $\mathcal{Z}$ is a set of predefined indices corresponding to examples to be \textit{masked} (hence the name).
+In our dataset there are no examples of this sort so $\mathcal{Z}$ is always empty.
+
+Notice that $MMS(X, Y)$ is not symmetric. 
+Specifically, each representation $X_j$ is contrasted with all other $Y_k$ in the batch, by $Y_j$ is not given the same treatment.
+The full MMS loss for a batch completes the symmetry and is defined as:
+\begin{align}
+    \label{eq:mms}
+    \mathcal{L}_{MMS}(\theta) = MMS(X,Y) + MMS(Y,X)
+\end{align}
+
+The margin $M$ is an important quantity and can be a constant value, updated according to a schedule, or adaptively updated according to some function of the batch.
+When $M=0$ this loss has the form of what is often referred to in the literature as InfoNCE loss \cite{oord2018representation}.
+Several works use this terminology \cite{he2020momentum, hjelm2018learning}, but there seems to be a lack of consensus over this issue \cite{tian2020contrastive}.
+Still, we hesitantly follow the current conventions and whenever an experiment uses a margin of 0, we will refer to it as InfoNCE.
+
+These methods are explored empirically in Section \ref{section:obj_exp_testing_rep}.
+
+\subsection{Hypersphere Loss}
+The hypersphere loss was introduced by Wang \cite{wang2020understanding} and attempts to reframe conventional contrastive loss through the notions of \textit{alignment} and \textit{uniformity} of latent representaions on the hypersphere.
+They provide empirical evidence that directy optimizing their measures of alignment and uniformity can outperform contrastive losses.
+Given a batch of size $B$ with $X$ and $Y$ defined in the same manner as in Section \ref{section:mms_loss}, the \textit{alignment} sub-loss is defined as:
 \begin{align*}
-\mathcal{L}(\theta) = \mathcal{L}_{contrast}(V_1, V_2)+ \mathcal{L}_{contrast}(V_1, V_2)
+    HSphere_{align}(X,Y) = \frac{1}{B}\sum_{i=1}^B \left\Vert X_i - Y_i\right\Vert_2^\alpha
+\end{align*}
+where $\alpha$ is a hyperparameter to be tuned.
+
+The \textit{uniformity} sub-loss is calculated as:
+\begin{align*}
+    HSphere_{uniformity}(X,Y) = \frac{1}{B(B+1)/2}\sum_{i=1}^B\sum_{j\geq i}^B e^{-t\left\Vert X_i - Y_j\right\Vert_2^2}
+\end{align*}
+with $t$ being another hyperparameter.
+
+In the original work the showed that values of $\alpha$ and $t$ around 1 tended to work well, but $t$ often needed to be lower than $alpha$.
+
+With those defined the full hyperspheric loss is defined as:
+
+\begin{align}
+    \label{eq:hyperspheric}
+    HSphere_{full}(X,Y) = \lambda_a*HSphere_{align}(X,Y) + \lambda_u*HSphere_{uniformity}(X,Y)
+\end{align}
+With $\lambda_a$ and $\lambda_u$ being additional weiting parameters.
+In the original work, an additional baseline contrastive loss was also added to Equation \ref{eq:hyperspheric} with an accompanying weighting hyperparameter, but they found that it was not necessary for optimal performance so we have omitted it in our experiments for simplicity.
+
+
+\section{Multiview Contrasting Frameworks}
+\label{section:multiview_framework}
+Work by Tian et al. \cite{tian2020contrastive}, provided a framework for using contrastive loss functions with several \textit{views}.
+They define a view as a certain sensory input during an arbitrary event.  
+In this way, there may be multiple views all describing the same underlying (or latent) event.
+A view, then, can have a more abstract meaning in which some amount of information contained in the view is shared among other views.
+
+Their work, then attempts to devise appropriate training schemes to maximize the latent information shared by all views.
+The two components of their work relevant to ours are the \textit{full-graph} and \textit{anchor} training schemes.
+
+Both schemes start with a symmetric loss function, $\mathcal{L_{sym}(V_1,V_2}$, defined over two views, $V_1$ and $V_2$, of size $B$.
+Each samples in $V_1$ are assumed to have a corresponding positive sample in $V_2$ that carries the same mutual information (and vice-versa for the samples in $V_2$).
+Note that $V_1$ and $V_2$ are from a minibatch of the full dataset, but to reduce notational clutter we will only define a single batch update.
+$\mathcal{L_{sym}}$ is also assumed to be designed such that it encourages alignment between the positive examples in two views and some notion of distance between the examples that do not carry mutual information.
+We will assume as well that the positive examples share the same index in the batch. 
+Notice that Equations \ref{eq:hyperspheric}, \ref{eq:triplet_full}, and \ref{eq:mms} all meet the above assumptions.
+
+Finally, the full-graph and anchor frameworks attempt to maximize the mutual information contained in a set of $K$ views $\mathcal{V}$.
+
+% \subsection{Full Graph}
+% \label{section:full_graph_framework}
+With the above assumptions and notation, the full graph framework computes the following loss for each batch:
+\begin{align*}
+    \mathcal{L}_{full_g}(\theta) = \frac{1}{B(B+1)/2}\sum_{i=1}^B \sum_{j\geq k}^B \mathcal{L}_sym(V_i, V_j)
 \end{align*}
 
-    % \underset{}{\mathbb{E}}\[\frac{e^{S(V_1,C_j}}{}\]
-We are careful to note here that V
-
-\subsection{Masked Margin}
-\subsection{Scheduled Masked Margin}
-\section{Multiview Contrasting Frameworks}
-\label{section:backg_contrast_framework}
-\subsection{Full Graph}
-\label{section:full_graph_framework}
-\subsection{Anchor}
-\label{section:anchor_framework}
+The anchor framework can be defined intuitively as aligning all views to one `anchor' view in a hub-and-spoke manner.
+It is calculated as:
+\begin{align*}
+    \mathcal{L}_{anchor}(\theta, i) = \frac{1}{B-1}\sum_{j=1}^{B} \mathbb{I}[j\neq i] \mathcal{L}_sym(V_i, V_j)
+\end{align*}
+Where $i$ denotes the index of the anchor view.
+% \subsection{Anchor}
+% \label{section:anchor_framework}
 \section{Neural Architectures}
-\subsection{ResDaveNet}
-\subsection{Pooling}
-\subsubsection{Multiheaded Attention Pooling}
-\subsubsection{Average Pooling}
-\section{Multi-lingual Training Frameworks}
-\subsection{Language Tag}
-\subsection{Shared Layers}
+We use convolutional neural networks (CNN) as our base architecture. 
+The focus of this work is on the effect of loss functions and training regime in a multilingual image retrieval and as such does not attempt to optimize architecture.
+We therefore use two off the shelf encoders for our images and speech utterances.
+\subsection{Image Model}
+The image encoder is based on the ResNet50 model proposed by He et al. \cite{he2016deep}.
+It is pretrained on ImageNet classification, but the final layer has been altered slightly.
+In the same manner as Harwath et al. \cite{harwath2019learning}, we remove the final softmax and fully connected layer and instead perform a 1x1 convolution to obtain a desired size of the final imagage representations.
+The output representation size for each image is a 7x7x1024 tensor.
+\subsection{Audio Model}
+We will first describe the pre-processing steps taken on the audio and then briefly describe the architecture.
+\subsubsection{Audio Pre-Processing}
+The same pre-processing is used for all experiments.
+Log-Mel filter bank spectrogram features are calculated from raw audio with 40 frequency bins.
+We use Hamming-windowed frames with a 15 ms width and shift of 10 ms.
+During batching, all utterances are padded up to the longest utterance in the batch.
+\subsubsection{architecture}
+The audio/speech model we use the same as \cite{harwath2019learning}. 
+It is a 17 layer CNN with the first being a 1D convolution of 128 filters of size 1x40x1 across the time dimension.
+The following 16 layers divided into 4 residual \textit{speech} blocks.
+Each speech block starts with an initial 1D convolution layer with kernel size of 1x9 a stride of two that effectively downsamples the input followed by a batch norm layer.
+This followed by three successive 1D convolution (kernel size 1x9, stride 1) and batch norm layers.
+No padding is used.
+This produces 1024 dimensional embeddings of various length depending on the batch.
+
+
+
+% \section{Multi-lingual Training Frameworks}
+% \label{section:multiling_framework}
+%
+% \subsection{Language Tag}
+% \subsection{Shared Layers}
