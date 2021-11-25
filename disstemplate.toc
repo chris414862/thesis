@@ -42,5 +42,4 @@
 \contentsline {chapter}{Appendices}{41}%
 \contentsline {chapter}{Appendix A.\hspace *{1em}Lerma's Appendix}{42}%
 \contentsline {chapter}{Bibliography}{43}%
-\contentsline {chapter}{Index}{48}%
-\contentsline {chapter}{Vita}{49}%
+\contentsline {chapter}{Vita}{47}%

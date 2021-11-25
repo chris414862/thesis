@@ -173,28 +173,29 @@ A view, then, can have a more abstract meaning in which some amount of informati
 Their work, then attempts to devise appropriate training schemes to maximize the latent information shared by all views.
 The two components of their work relevant to ours are the \textit{full-graph} and \textit{anchor} training schemes.
 
-Both schemes start with a symmetric loss function, $\mathcal{L_{sym}(V_1,V_2}$, defined over two views, $V_1$ and $V_2$, of size $B$.
+Both schemes start with a symmetric loss function, $\mathcal{L}_{sym}(V_1,V_2)$, defined over two views, $V_1$ and $V_2$, of size $B$.
 Each samples in $V_1$ are assumed to have a corresponding positive sample in $V_2$ that carries the same mutual information (and vice-versa for the samples in $V_2$).
 Note that $V_1$ and $V_2$ are from a minibatch of the full dataset, but to reduce notational clutter we will only define a single batch update.
 $\mathcal{L_{sym}}$ is also assumed to be designed such that it encourages alignment between the positive examples in two views and some notion of distance between the examples that do not carry mutual information.
 We will assume as well that the positive examples share the same index in the batch. 
 Notice that Equations \ref{eq:hyperspheric}, \ref{eq:triplet_full}, and \ref{eq:mms} all meet the above assumptions.
 
-Finally, the full-graph and anchor frameworks attempt to maximize the mutual information contained in a set of $K$ views $\mathcal{V}$.
+Finally, the full-graph and anchor frameworks attempt to maximize the mutual information contained in a set of $K$ views $\mathcal{V_i}, i\in [1,K]$.
 
 % \subsection{Full Graph}
 % \label{section:full_graph_framework}
 With the above assumptions and notation, the full graph framework computes the following loss for each batch:
 \begin{align*}
-    \mathcal{L}_{full_g}(\theta) = \frac{1}{B(B+1)/2}\sum_{i=1}^B \sum_{j\geq k}^B \mathcal{L}_sym(V_i, V_j)
+    \mathcal{L}_{full_g}(\theta) = \frac{1}{B(B+1)/2}\sum_{i=1}^B \sum_{j\geq k}^B \mathcal{L}_{sym}(V_i, V_j)
 \end{align*}
 
 The anchor framework can be defined intuitively as aligning all views to one `anchor' view in a hub-and-spoke manner.
 It is calculated as:
 \begin{align*}
-    \mathcal{L}_{anchor}(\theta, i) = \frac{1}{B-1}\sum_{j=1}^{B} \mathbb{I}[j\neq i] \mathcal{L}_sym(V_i, V_j)
+    \mathcal{L}_{anchor}(\theta, i) = \frac{1}{B-1}\sum_{j=1}^{B} \mathbb{I}[j\neq i] \mathcal{L}_{sym}(V_i, V_j)
 \end{align*}
 Where $i$ denotes the index of the anchor view.
+This formulation clearly makes every contrasting equation involve $\mathcal{V}_i$ making it `anchor' all other views.
 % \subsection{Anchor}
 % \label{section:anchor_framework}
 \section{Neural Architectures}
